@@ -1,0 +1,1 @@
+- [AIC Competition - Core Project Knowledge](project_aic_competition.md) — Full analysis of competition structure, scoring, rules, submission, tech stack, and timeline for the AI for Industry Challenge
