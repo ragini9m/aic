@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+# Outer orchestrator for synthetic dataset collection.
+#
+# For each sample: generate a randomized launch-arg set, start
+# `aic_bringup`, wait for settle, invoke `capture_scene`, shut down.
+#
+# Usage:
+#   bash collect_dataset.sh <output_dir> <num_samples> [<start_idx>]
+#
+# Run this *outside* any running aic_model; it owns the bringup session.
+
+set -u
+
+OUT_DIR="${1:?output dir required}"
+N="${2:?num samples required}"
+START_IDX="${3:-0}"
+SETTLE_SEC="${SETTLE_SEC:-3.0}"
+LAUNCH_READY_SEC="${LAUNCH_READY_SEC:-20.0}"
+
+mkdir -p "$OUT_DIR"
+
+for (( i = START_IDX; i < START_IDX + N; i++ )); do
+    SAMPLE_PATH="$OUT_DIR/sample_$(printf '%06d' "$i").npz"
+    if [[ -f "$SAMPLE_PATH" ]]; then
+        echo "[$i] exists, skipping."
+        continue
+    fi
+
+    # Dump randomized launch args via the Python helper.
+    ARGS_FILE="$(mktemp)"
+    python3 -c "
+import json, sys
+from aic_my_policy.data_collection.randomize import sample_scene_config
+cfg = sample_scene_config(seed=$i)
+print(' '.join(cfg.as_launch_args()))
+" > "$ARGS_FILE" || { echo "randomize failed"; exit 1; }
+    LAUNCH_ARGS="$(cat "$ARGS_FILE")"
+    rm -f "$ARGS_FILE"
+
+    echo "[$i] launching: $LAUNCH_ARGS"
+    ros2 launch aic_bringup aic_gz_bringup.launch.py $LAUNCH_ARGS > /tmp/aic_launch_$i.log 2>&1 &
+    LAUNCH_PID=$!
+    sleep "$LAUNCH_READY_SEC"
+
+    if ! ps -p "$LAUNCH_PID" > /dev/null; then
+        echo "[$i] launch died early; see /tmp/aic_launch_$i.log"
+        continue
+    fi
+
+    python3 -m aic_my_policy.data_collection.capture_scene \
+        --out "$SAMPLE_PATH" --settle "$SETTLE_SEC" \
+        || echo "[$i] capture failed"
+
+    kill -INT "$LAUNCH_PID" 2>/dev/null || true
+    wait "$LAUNCH_PID" 2>/dev/null || true
+    sleep 1
+done
+
+echo "Done. Samples in $OUT_DIR"
