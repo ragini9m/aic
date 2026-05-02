@@ -131,6 +131,12 @@ class InsertCablePolicy(Policy):
             gripper = self._gripper_pose(obs)
 
             if port is None or plug is None or gripper is None:
+                self.get_logger().warn(
+                    f"[policy] waiting: port={'ok' if port else 'NONE'} "
+                    f"plug={'ok' if plug else 'NONE'} "
+                    f"gripper={'ok' if gripper else 'NONE'}",
+                    throttle_duration_sec=2.0,
+                )
                 self.sleep_for(LOOP_DT)
                 continue
 
