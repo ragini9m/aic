@@ -52,11 +52,13 @@ class VisionPortPoseEstimator(PortPoseEstimator):
         self._port_type: Optional[str] = None
         self._plug_frame: Optional[str] = None
         self._last_port_pose = None
+        self._plug_tcp_delta: Optional[tuple] = None  # (dx, dy, dz) plug_tip - tcp
 
     # --- lifecycle --------------------------------------------------------
 
     def initialize(self, task: Task) -> bool:
         self._last_port_pose = None
+        self._plug_tcp_delta = None
         self._port_type = task.port_type
         if self._port_type not in self._inference:
             self._logger.error(f"No weights loaded for port_type={self._port_type!r}")
@@ -107,12 +109,32 @@ class VisionPortPoseEstimator(PortPoseEstimator):
         return self._last_port_pose
 
     def get_plug_tip_pose(self, observation: Optional[Observation]) -> Optional[Pose]:
-        if self._plug_frame is None:
+        tcp = observation.controller_state.tcp_pose if observation else None
+
+        # Try ground-truth TF first (only available with ground_truth:=true).
+        if self._plug_frame is not None:
+            T = self._lookup_transform_mat(self.BASE_FRAME, self._plug_frame)
+            if T is not None:
+                plug_pose = _mat_to_pose(T)
+                # Cache measured delta so we can use it when TF is blocked.
+                if tcp is not None:
+                    self._plug_tcp_delta = (
+                        T[0, 3] - tcp.position.x,
+                        T[1, 3] - tcp.position.y,
+                        T[2, 3] - tcp.position.z,
+                    )
+                return plug_pose
+
+        # TF blocked (ground_truth:=false): derive from TCP + calibrated delta.
+        if tcp is None:
             return None
-        T = self._lookup_transform_mat(self.BASE_FRAME, self._plug_frame)
-        if T is None:
-            return None
-        return _mat_to_pose(T)
+        dx, dy, dz = self._plug_tcp_delta if self._plug_tcp_delta else (0.0, 0.0, 0.0)
+        plug = Pose()
+        plug.position.x = tcp.position.x + dx
+        plug.position.y = tcp.position.y + dy
+        plug.position.z = tcp.position.z + dz
+        plug.orientation = tcp.orientation
+        return plug
 
     # --- helpers ----------------------------------------------------------
 
