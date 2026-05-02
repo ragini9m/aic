@@ -47,11 +47,19 @@ ALIGN_Z_OFFSET = 0.02         # 2 cm above the port, fully aligned
 SEARCH_Z_START = 0.005        # begin search 5 mm above the port entrance
 SEAT_Z_DEPTH = -0.015         # 15 mm below entrance = fully seated
 
-APPROACH_BUDGET_S = 4.0
+LIFT_BUDGET_S = 3.0
+APPROACH_BUDGET_S = 5.0
 ALIGN_BUDGET_S = 3.0
 SEARCH_BUDGET_S = 15.0
 SEAT_BUDGET_S = 8.0
 VERIFY_HOLD_S = 2.0
+
+SAFE_Z = 1.35           # lift to this height before moving laterally (m in base_link)
+
+# Port position sanity bounds (base_link frame). Reject vision estimates outside these.
+PORT_X_BOUNDS = (0.00, 0.45)
+PORT_Y_BOUNDS = (-0.40, 0.20)
+PORT_Z_BOUNDS = (1.00, 1.40)
 
 SEARCH_DESCENT_M_PER_S = 0.004   # slow sink while spiraling (4 mm/s)
 SEAT_DESCENT_M_PER_S = 0.010     # faster once seated (10 mm/s)
@@ -59,6 +67,7 @@ SEAT_DESCENT_M_PER_S = 0.010     # faster once seated (10 mm/s)
 
 class State(Enum):
     INIT = "INIT"
+    LIFT = "LIFT"
     APPROACH = "APPROACH"
     ALIGN = "ALIGN"
     SEARCH = "SEARCH"
@@ -119,9 +128,9 @@ class InsertCablePolicy(Policy):
             self.get_logger().error("Estimator init failed.")
             return False
 
-        state = State.APPROACH
+        state = State.LIFT
         state_entered = self.time_now()
-        send_feedback("APPROACH")
+        send_feedback("LIFT")
         success = False
 
         while state not in (State.DONE, State.ABORT):
@@ -140,9 +149,42 @@ class InsertCablePolicy(Policy):
                 self.sleep_for(LOOP_DT)
                 continue
 
+            # Sanity-check port pose — reject vision estimates outside the workspace.
+            px, py, pz = port.position.x, port.position.y, port.position.z
+            if not (PORT_X_BOUNDS[0] <= px <= PORT_X_BOUNDS[1] and
+                    PORT_Y_BOUNDS[0] <= py <= PORT_Y_BOUNDS[1] and
+                    PORT_Z_BOUNDS[0] <= pz <= PORT_Z_BOUNDS[1]):
+                self.get_logger().warn(
+                    f"[policy] port pose out of bounds ({px:.3f},{py:.3f},{pz:.3f}), skipping tick",
+                    throttle_duration_sec=2.0,
+                )
+                self.sleep_for(LOOP_DT)
+                continue
+
             elapsed_in_state = (self.time_now() - state_entered).nanoseconds / 1e9
 
-            if state == State.APPROACH:
+            if state == State.LIFT:
+                # Lift straight up to SAFE_Z before moving laterally.
+                lift_target = Pose()
+                lift_target.position.x = gripper.position.x
+                lift_target.position.y = gripper.position.y
+                lift_target.position.z = SAFE_Z
+                lift_target.orientation = gripper.orientation
+                cmd = make_motion_update(
+                    pose=lift_target,
+                    profile=APPROACH,
+                    stamp=self.time_now().to_msg(),
+                )
+                try:
+                    move_robot(motion_update=cmd)
+                except Exception:
+                    pass
+                at_safe_z = gripper.position.z >= (SAFE_Z - 0.03)
+                if at_safe_z or elapsed_in_state > LIFT_BUDGET_S:
+                    state, state_entered = State.APPROACH, self.time_now()
+                    send_feedback("APPROACH")
+
+            elif state == State.APPROACH:
                 self._command(
                     move_robot, APPROACH, port, plug, gripper,
                     z_offset=APPROACH_Z_OFFSET,
