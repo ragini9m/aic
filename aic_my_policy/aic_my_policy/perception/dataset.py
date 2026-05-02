@@ -18,8 +18,8 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset
 
-from aic_my_policy.perception.keypoints import PORT_KEYPOINTS, NUM_KEYPOINTS
-from aic_my_policy.perception.model import INPUT_SIZE, OUTPUT_SIZE, OUTPUT_STRIDE
+from  aic_my_policy.perception.keypoints import PORT_KEYPOINTS, NUM_KEYPOINTS
+from  aic_my_policy.perception.model import INPUT_SIZE, OUTPUT_SIZE, OUTPUT_STRIDE
 
 
 def _quat_to_R(x: float, y: float, z: float, w: float) -> np.ndarray:
@@ -91,7 +91,7 @@ class PortKeypointDataset(Dataset):
 
     IMG_MEAN = np.array([0.485, 0.456, 0.406], dtype=np.float32)
     IMG_STD = np.array([0.229, 0.224, 0.225], dtype=np.float32)
-    HEATMAP_SIGMA_PX = 2.0
+    HEATMAP_SIGMA_PX = 6.0
 
     def __init__(
         self,
@@ -163,8 +163,8 @@ class PortKeypointDataset(Dataset):
 
     @staticmethod
     def _resize(img: np.ndarray, size_hw) -> np.ndarray:
-        import cv2
-        return cv2.resize(img, (size_hw[1], size_hw[0]), interpolation=cv2.INTER_AREA)
+        from PIL import Image
+        return np.array(Image.fromarray(img).resize((size_hw[1], size_hw[0]), Image.LANCZOS))
 
     def _preprocess_image(self, img: np.ndarray) -> torch.Tensor:
         img_f = img.astype(np.float32) / 255.0

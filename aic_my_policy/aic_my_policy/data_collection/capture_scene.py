@@ -129,7 +129,7 @@ class CaptureNode(Node):
 
         cam_extrinsics: dict[str, np.ndarray] = {}
         for name in CAMERA_NAMES:
-            optical = f"{name}_camera_optical_frame"
+            optical = f"{name}_camera/optical"
             extr = self._lookup_tf("base_link", optical)
             if extr is None:
                 self.get_logger().warn(f"No static TF for {optical}; skipping.")

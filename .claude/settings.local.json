@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pixi --version)",
+      "Bash(pixi info *)",
+      "Bash(pixi install *)",
+      "Bash(pixi search *)"
+    ]
+  }
+}

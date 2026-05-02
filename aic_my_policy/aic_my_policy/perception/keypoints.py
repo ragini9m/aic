@@ -17,8 +17,8 @@ import numpy as np
 
 # --- SFP (small form-factor pluggable) -------------------------------------
 # 4 keypoints at the corners of the rectangular port entrance.
-SFP_HALF_WIDTH_M = 0.00685   # 13.7 mm wide  -> TODO verify against asset
-SFP_HALF_HEIGHT_M = 0.00425  # 8.5 mm tall   -> TODO verify against asset
+SFP_HALF_WIDTH_M = 0.00642   # 13.7 mm wide  -> TODO verify against asset
+SFP_HALF_HEIGHT_M = 0.004139  # 8.5 mm tall   -> TODO verify against asset
 
 SFP_KEYPOINTS_LOCAL = np.array(
     [
@@ -32,7 +32,7 @@ SFP_KEYPOINTS_LOCAL = np.array(
 
 # --- SC (subscriber connector) ---------------------------------------------
 # SC is circular; pick 4 points on the bore rim for PnP stability.
-SC_RADIUS_M = 0.00125  # 2.5 mm bore -> TODO verify against asset
+SC_RADIUS_M = 0.0019  # 2.5 mm bore -> TODO verify against asset
 
 SC_KEYPOINTS_LOCAL = np.array(
     [

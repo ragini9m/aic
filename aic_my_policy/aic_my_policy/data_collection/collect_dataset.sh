@@ -30,7 +30,7 @@ for (( i = START_IDX; i < START_IDX + N; i++ )); do
     ARGS_FILE="$(mktemp)"
     python3 -c "
 import json, sys
-from aic_my_policy.data_collection.randomize import sample_scene_config
+from aic_my_policy.aic_my_policy.data_collection.randomize import sample_scene_config
 cfg = sample_scene_config(seed=$i)
 print(' '.join(cfg.as_launch_args()))
 " > "$ARGS_FILE" || { echo "randomize failed"; exit 1; }
@@ -38,7 +38,8 @@ print(' '.join(cfg.as_launch_args()))
     rm -f "$ARGS_FILE"
 
     echo "[$i] launching: $LAUNCH_ARGS"
-    ros2 launch aic_bringup aic_gz_bringup.launch.py $LAUNCH_ARGS > /tmp/aic_launch_$i.log 2>&1 &
+    echo "we updated bro"
+    setsid ros2 launch aic_bringup aic_gz_bringup.launch.py $LAUNCH_ARGS > /tmp/aic_launch_$i.log 2>&1 &
     LAUNCH_PID=$!
     sleep "$LAUNCH_READY_SEC"
 
@@ -47,13 +48,19 @@ print(' '.join(cfg.as_launch_args()))
         continue
     fi
 
-    python3 -m aic_my_policy.data_collection.capture_scene \
+    python3 -m aic_my_policy.aic_my_policy.data_collection.capture_scene \
         --out "$SAMPLE_PATH" --settle "$SETTLE_SEC" \
         || echo "[$i] capture failed"
 
-    kill -INT "$LAUNCH_PID" 2>/dev/null || true
+    # kill -INT "$LAUNCH_PID" 2>/dev/null || true
+    kill -INT "-$LAUNCH_PID" 2>/dev/null || kill -INT "$LAUNCH_PID" 2>/dev/null || null  # kill whole process group
+    sleep 5 
+    kill -KILL "-$LAUNCH_PID" 2>/dev/null  || true
+
     wait "$LAUNCH_PID" 2>/dev/null || true
-    sleep 1
+    pkill -9 -f "gz sim" 2>/dev/null || true
+    pkill -9 -f "ruby.*gz" 2>/dev/null || true
+    sleep 2
 done
 
 echo "Done. Samples in $OUT_DIR"
