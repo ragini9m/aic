@@ -41,6 +41,37 @@ pixi run ros2 run aic_model aic_model --ros-args -p use_sim_time:=true -p policy
 
 The current scaffold therefore proves lifecycle/action/observation plumbing but does not attempt the task.
 
+- Added `aic_model/aic_model/PerceptionSnapshot.py` as the next read-only diagnostic policy.
+- `PerceptionSnapshot` saves legal camera observations and metadata to disk without moving the robot or using forbidden topics.
+- Default output directory is `/tmp/aic_perception_snapshots/<run_timestamp>/`.
+- Override with `AIC_SNAPSHOT_DIR=/path/to/output` when launching the model.
+- The user ran `PerceptionSnapshot` and saved logs in:
+  - `/home/optimus/ws_aic/src/terminal_1.log`
+  - `/home/optimus/ws_aic/src/terminal_2.log`
+- Review confirmed:
+  - `PerceptionSnapshot` loaded successfully.
+  - Lifecycle and action behavior passed.
+  - 3 snapshots were saved for each of the 3 trials.
+  - The saved snapshot run directory is `/home/optimus/ws_aic/snapshots/20260503_005954`.
+  - Total score stayed at 3.000, as expected for no-motion diagnostics.
+  - No off-limit contact or excessive-force penalty was reported.
+- Snapshot image contact sheets were generated for inspection:
+  - `/tmp/aic_snapshot_contact.png`
+  - `/tmp/aic_snapshot_center_sequence.png`
+- The snapshot dataset and generated contact sheets were copied into the repo for durable handoff:
+  - `artifacts/perception_snapshot_20260503_005954/`
+  - raw snapshot files: 36
+  - total artifact size: about 93 MB
+- Image inspection confirmed:
+  - SC target is visible as a bright cyan/blue port on the task board from all three wrist cameras.
+  - SFP/NIC targets are visible in the center camera for both NIC-card trials, with the two greenish SFP port openings distinguishable.
+  - Left/right cameras provide useful angled context but center camera is the best initial primary view.
+  - The three saved frames per trial are nearly static because the policy sends no motion commands.
+- Current recommendation:
+  - Build an offline perception-analysis tool over the saved snapshots before commanding robot motion.
+  - Start with simple, explainable detectors for SC and SFP target localization, then save annotated outputs for review.
+  - Keep using only legal `Observation` data and task fields.
+
 ## Important Competition Rules
 
 Highest-priority rule: submitted policy must use only official interfaces.
@@ -238,6 +269,15 @@ Why:
 - Hidden evaluation randomizes board and component placement.
 - We need target localization from allowed observations before insertion control.
 
+### Decision: Add `PerceptionSnapshot` before motion
+
+Why:
+
+- We need to inspect what each wrist camera sees for SFP and SC trials.
+- Saved frames plus camera intrinsics let us evaluate whether classical vision is enough.
+- It stays compliant because it only consumes `Observation` data and writes local diagnostic artifacts.
+- It exits like `TaskReporter` and sends no robot commands.
+
 ## Commands To Run
 
 Use these from repo root:
@@ -310,6 +350,97 @@ trial_3: tier_1=1, tier_2=0, tier_3=0, final plug-port distance=0.32m
 
 This is the expected result for `TaskReporter`.
 
+### Run perception snapshot policy
+
+After editing or adding local Python policy files, refresh the Pixi package:
+
+```bash
+pixi reinstall ros-kilted-aic-model
+```
+
+Terminal 1, eval:
+
+```bash
+export DBX_CONTAINER_MANAGER=docker
+distrobox enter -r aic_eval -- /entrypoint.sh ground_truth:=false start_aic_engine:=true
+```
+
+Terminal 2, policy:
+
+```bash
+mkdir -p /home/optimus/ws_aic/snapshots
+AIC_SNAPSHOT_DIR=/home/optimus/ws_aic/snapshots \
+pixi run ros2 run aic_model aic_model --ros-args -p use_sim_time:=true -p policy:=aic_model.PerceptionSnapshot
+```
+
+Expected model logs:
+
+- `Loading policy module: aic_model.PerceptionSnapshot`
+- `Using policy: PerceptionSnapshot`
+- `Saving perception snapshots to ...`
+- `PerceptionSnapshot task: ... target=...`
+- `Saved perception snapshot 1 ...`
+- `Saved perception snapshot 2 ...`
+- `Saved perception snapshot 3 ...`
+- `PerceptionSnapshot complete.`
+
+Expected output files:
+
+```text
+/home/optimus/ws_aic/snapshots/<run_timestamp>/
+  task_1_sfp_to_nic_card_mount_0_sfp_port_0/
+    00_left.ppm
+    00_center.ppm
+    00_right.ppm
+    00_metadata.json
+    ...
+  task_1_sfp_to_nic_card_mount_1_sfp_port_0/
+    ...
+  task_1_sc_to_sc_port_1_sc_port_base/
+    ...
+```
+
+The `.ppm` files can be opened by most image viewers. Metadata includes task fields, camera intrinsics, joint state, TCP pose, TCP velocity, and wrist wrench.
+
+Observed `PerceptionSnapshot` output from the 2026-05-03 run:
+
+```text
+/home/optimus/ws_aic/snapshots/20260503_005954/
+  task_1_sfp_to_nic_card_mount_0_sfp_port_0/
+  task_1_sfp_to_nic_card_mount_1_sfp_port_0/
+  task_1_sc_to_sc_port_1_sc_port_base/
+```
+
+Each task directory contains:
+
+```text
+00_left.ppm
+00_center.ppm
+00_right.ppm
+00_metadata.json
+01_left.ppm
+01_center.ppm
+01_right.ppm
+01_metadata.json
+02_left.ppm
+02_center.ppm
+02_right.ppm
+02_metadata.json
+```
+
+Total files: 36.
+
+Observed eval summary:
+
+```text
+Successful: 3
+Failed: 0
+Total Score: 3.000
+trial_1: tier_1=1, tier_2=0, tier_3=0, final plug-port distance=0.13m
+trial_2: tier_1=1, tier_2=0, tier_3=0, final plug-port distance=0.14m
+trial_3: tier_1=1, tier_2=0, tier_3=0, final plug-port distance=0.32m
+```
+
 ## Current Issues And Watch Items
 
 ### Pixi reinstall needed after source changes
@@ -368,6 +499,10 @@ Interpretation:
 - These happened after `All Trials Processed` and after `aic_engine` finished cleanly.
 - Treat them as Gazebo/eval shutdown noise, not a policy failure.
 
+The same pattern occurred after the `PerceptionSnapshot` run.
+
+Terminal 2 also showed a `tf2_ros` listener thread `ExternalShutdownException` after Ctrl-C. This occurred after `on_shutdown` and after the run had completed; treat it as shutdown noise, not a policy failure.
+
 ### ACL watch item
 
 The eval log contains Zenoh access-control messages like:
@@ -381,27 +516,119 @@ Interpretation:
 - The scaffold itself did not touch forbidden interfaces, so this is not currently a policy concern.
 - Before final confidence, run a stricter ACL-enabled local check so we know the policy works under portal-like model access controls.
 
+### Context compression watch item
+
+This `log.md` file is intended to preserve the important project state across context compression or future agent handoff.
+
+Important details that should survive through this file:
+
+- Competition compliance rules and forbidden interfaces.
+- Repo package map and key entry points.
+- Files changed so far.
+- Commands that worked locally.
+- Observed task sequence and scoring results.
+- Snapshot directory and image-evaluation findings.
+- Current recommendation: offline perception analysis before motion.
+
+After any context compression, a future agent should read this file first before touching code.
+
+## Perception Snapshot Image Evaluation
+
+Source snapshot run:
+
+```text
+/home/optimus/ws_aic/snapshots/20260503_005954
+```
+
+Copied repo artifact:
+
+```text
+artifacts/perception_snapshot_20260503_005954
+```
+
+Derived contact sheets used for visual inspection:
+
+```text
+/tmp/aic_snapshot_contact.png
+/tmp/aic_snapshot_center_sequence.png
+```
+
+Repo-local contact sheets:
+
+```text
+artifacts/perception_snapshot_20260503_005954/contact_sheets/aic_snapshot_contact.png
+artifacts/perception_snapshot_20260503_005954/contact_sheets/aic_snapshot_center_sequence.png
+```
+
+All-camera contact sheet:
+
+![All-camera contact sheet](artifacts/perception_snapshot_20260503_005954/contact_sheets/aic_snapshot_contact.png)
+
+Center-camera sequence contact sheet:
+
+![Center-camera sequence contact sheet](artifacts/perception_snapshot_20260503_005954/contact_sheets/aic_snapshot_center_sequence.png)
+
+SC trial:
+
+- Directory: `task_1_sc_to_sc_port_1_sc_port_base`
+- Target from task message: `target_module_name=sc_port_1`, `port_name=sc_port_base`.
+- The cyan/blue SC port is clearly visible in the left, center, and right images.
+- The magenta square/outline is also visible, but it appears to be board marking/fixture context rather than the requested port.
+- The center camera sees the target in the upper-left/left region of the image, with the plug/gripper visible near the bottom.
+
+SFP trial 1:
+
+- Directory: `task_1_sfp_to_nic_card_mount_0_sfp_port_0`
+- Target from task message: `target_module_name=nic_card_mount_0`, `port_name=sfp_port_0`.
+- The target NIC assembly is visible near the lower center of the center camera.
+- Two greenish rectangular SFP port openings are visible on the NIC module.
+- The left/right cameras see the module from oblique angles and may help resolve orientation.
+
+SFP trial 2:
+
+- Directory: `task_1_sfp_to_nic_card_mount_1_sfp_port_0`
+- Target from task message: `target_module_name=nic_card_mount_1`, `port_name=sfp_port_0`.
+- Similar to trial 1: the NIC assembly and greenish SFP ports are visible in the center image.
+- The board/component position differs from trial 1, confirming we need task-conditioned localization rather than a single hardcoded pixel location.
+
+Implications:
+
+- A legal vision-based localization path is plausible because the target hardware is visible before motion.
+- Center camera should be the first detector input; left/right can be added for cross-checks or stereo-style geometry later.
+- Start with offline image processing:
+  - SC: segment bright cyan/blue high-saturation target region and estimate a port center/orientation.
+  - SFP: detect the NIC/card assembly and green port rectangles, then choose `sfp_port_0` or `sfp_port_1` by task name and observed ordering.
+- Avoid using ground-truth TF or scoring topics in the runtime policy.
+
 ## Next Implementation Plan
 
-1. Keep `TaskReporter` as a diagnostic scaffold.
-2. Add a perception debug policy or extend scaffold to save/log non-forbidden visual observations carefully.
-3. Determine target localization strategy:
-   - likely start with classical vision on wrist camera images
-   - use task message to select expected target type
-   - avoid ground-truth object TF in eval path
-4. Add guarded motion in stages:
+1. Keep `TaskReporter` and `PerceptionSnapshot` as diagnostic policies.
+2. Build an offline perception-analysis script/tool for saved snapshots:
+   - load `.ppm` images and metadata
+   - run initial SC and SFP heuristic detectors
+   - save annotated PNGs with detected boxes/keypoints
+   - report confidence and selected target center/orientation
+3. Review detector outputs on the current three trials.
+4. If detector quality is acceptable, integrate the detector into a diagnostic runtime policy that logs detections but still sends no motion.
+5. Add guarded motion in stages:
    - move to a visually estimated pre-insertion pose
    - align yaw/roll/pitch
    - slow compliant approach
    - monitor wrench and controller state
    - return action result after insertion/stabilization
-5. Test SFP and SC separately.
-6. Only after reliable insertion, optimize speed/path/smoothness.
+6. Test SFP and SC separately.
+7. Only after reliable insertion, optimize speed/path/smoothness.
 
 ## Files Changed So Far
 
 - `aic_model/aic_model/TaskReporter.py`
   - New read-only scaffold policy.
 
+- `aic_model/aic_model/PerceptionSnapshot.py`
+  - New read-only policy for saving camera frames and observation metadata.
+
 - `docker/aic_model/Dockerfile`
   - Changed default policy from `aic_example_policies.ros.CheatCode` to `aic_model.TaskReporter`.
+
+- `artifacts/perception_snapshot_20260503_005954/`
+  - Copied raw snapshot data and contact-sheet PNGs into the repo for durable visual/context handoff.
