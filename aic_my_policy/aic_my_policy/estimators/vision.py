@@ -51,7 +51,7 @@ class VisionPortPoseEstimator(PortPoseEstimator):
         }
         self._port_type: Optional[str] = None
         self._plug_frame: Optional[str] = None
-        self._cam_optical_frame = f"{self.CAMERA}_camera_optical_frame"
+        self._cam_optical_frame = f"{self.CAMERA}_camera/optical"
         self._last_port_pose = None
 
     # --- lifecycle --------------------------------------------------------
