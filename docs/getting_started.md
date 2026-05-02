@@ -1,6 +1,9 @@
 # Getting Started
 
-Welcome to the AI for Industry Challenge! Follow this guide to familarize yourself with the toolkit structure, prepare  your environment, and confirm your setup by running a quickstart example before developing your solution.
+Welcome to the AI for Industry Challenge! Follow this guide to familiarize yourself with the toolkit structure, prepare  your environment, and confirm your setup by running a quickstart example before developing your solution.
+
+> [!NOTE]
+> **ROS 2 Distribution:** Official evaluation of all submissions will be conducted using **ROS 2 Kilted Kaiju**. If you choose to develop or test your policy using a different ROS 2 distribution (e.g., Humble or Jazzy), it is entirely your responsibility to ensure compatibility and support. Please note that **inter-distro communication is not guaranteed and not officially supported**. For those new to ROS 2, we strongly encourage completing the [official ROS 2 tutorials](https://docs.ros.org/en/kilted/Tutorials.html).
 
 ## Architecture Overview
 
@@ -35,6 +38,8 @@ For cloud evaluation, all participant submissions will be evaluated on the same 
 - **vCPU:** 64 cores
 - **RAM:** 256 GiB
 - **GPU:** 1 x NVIDIA L4 Tensor Core
+  - Driver Version: 580.126.09
+  - CUDA Version: 13.0 
 - **VRAM:** 24 GiB
 
 ---
@@ -166,6 +171,9 @@ With the simulation environment running (Step 2), run the following policy:
 cd ~/ws_aic/src/aic
 pixi run ros2 run aic_model aic_model --ros-args -p use_sim_time:=true -p policy:=aic_example_policies.ros.WaveArm
 ```
+
+> [!NOTE]
+> Because `pixi run` creates its own environment and runs `aic_model` inside it, the `pixi run` invocation can occur outside Docker and distrobox. It is typically easier, faster, and simpler to run it outside the container.
 
 Once the `aic_model` node starts, the AIC engine spawns a task board and a gripper-attached cable in the Gazebo window. The eval container terminal will then track three successive trials and display their scores. See [Scoring](./scoring.md) for more details.
 

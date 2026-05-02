@@ -36,7 +36,7 @@ Follow the sections below to navigate through each phase of the process.
 
 4. **🧪 Test Your Solution**
    - Use the provided simulation environment to test your policy.
-   - Run `aic_engine` with the `sampole_config` in [`aic_engine/config/`](./aic_engine/config/) to test different scenarios. For more information on running the `aic_engine` with different configs, see the [aic_engine README file](./aic_engine/README.md).
+   - Run `aic_engine` with the `sample_config` in [`aic_engine/config/`](./aic_engine/config/) to test different scenarios. For more information on running the `aic_engine` with different configs, see the [aic_engine README file](./aic_engine/README.md).
    - Create your own test scenarios by following the configuration example in [`aic_engine/config/`](./aic_engine/config/) to run with `aic_engine`.
    - Refer to [Troubleshooting](./docs/troubleshooting.md) if you encounter issues.
 
@@ -74,6 +74,9 @@ This is what you develop and submit:
 **Convenient Entry Point:** We provide an `aic_model` framework that handles all the ROS 2 boilerplate and lifecycle management. You simply implement a Python policy class that gets dynamically loaded at runtime. See the [Policy Integration Guide](./docs/policy.md) for details.
 
 ### Development and Submission Workflow
+
+> [!IMPORTANT]
+> **ROS 2 Distribution:** The official evaluation of all submissions will be conducted using **ROS 2 Kilted Kaiju**. If you choose to develop or test your policy using a different ROS 2 distribution (e.g., Humble or Jazzy), it is entirely your responsibility to ensure compatibility and support. Please note that **inter-distro communication is not guaranteed and not officially supported**.
 
 **Development Options:**
 - Develop inside a container (recommended - matches evaluation environment).
