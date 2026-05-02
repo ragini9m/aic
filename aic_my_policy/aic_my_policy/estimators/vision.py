@@ -51,7 +51,6 @@ class VisionPortPoseEstimator(PortPoseEstimator):
         }
         self._port_type: Optional[str] = None
         self._plug_frame: Optional[str] = None
-        self._cam_optical_frame = f"{self.CAMERA}_camera/optical"
         self._last_port_pose = None
 
     # --- lifecycle --------------------------------------------------------
@@ -87,14 +86,15 @@ class VisionPortPoseEstimator(PortPoseEstimator):
             return None
 
         K = np.asarray(info_msg.k, dtype=np.float64).reshape(3, 3)
+        cam_frame = info_msg.header.frame_id
         result = self._inference[self._port_type](img, K)
 
         if result is None:
             self._logger.warn("[vision] PnP failed — bad keypoints", throttle_duration_sec=2.0)
         else:
-            T_cam_base = self._lookup_transform_mat(self.BASE_FRAME, self._cam_optical_frame)
+            T_cam_base = self._lookup_transform_mat(self.BASE_FRAME, cam_frame)
             if T_cam_base is None:
-                self._logger.warn(f"[vision] TF lookup failed: {self.BASE_FRAME} <- {self._cam_optical_frame}", throttle_duration_sec=2.0)
+                self._logger.warn(f"[vision] TF lookup failed: {self.BASE_FRAME} <- {cam_frame}", throttle_duration_sec=2.0)
             else:
                 T_port_cam = np.eye(4)
                 T_port_cam[:3, :3] = result["R_port_cam"]
