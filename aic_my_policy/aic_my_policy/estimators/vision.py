@@ -73,22 +73,29 @@ class VisionPortPoseEstimator(PortPoseEstimator):
 
     def get_port_pose(self, observation: Optional[Observation]) -> Optional[Pose]:
         if observation is None or self._port_type is None:
+            self._logger.warn("[vision] observation or port_type is None", throttle_duration_sec=2.0)
             return None
-        img_msg = getattr(observation, f"{self.CAMERA}_image")
-        info_msg = getattr(observation, f"{self.CAMERA}_camera_info")
+        img_msg = getattr(observation, f"{self.CAMERA}_image", None)
+        info_msg = getattr(observation, f"{self.CAMERA}_camera_info", None)
         if img_msg is None or info_msg is None:
+            self._logger.warn(f"[vision] missing image/camera_info for camera='{self.CAMERA}'", throttle_duration_sec=2.0)
             return None
         try:
             img = self._bridge.imgmsg_to_cv2(img_msg, desired_encoding="rgb8")
         except Exception as ex:
-            self._logger.warn(f"cv_bridge failed: {ex}")
+            self._logger.warn(f"[vision] cv_bridge failed: {ex}", throttle_duration_sec=2.0)
             return None
-        K = np.asarray(info_msg.k, dtype=np.float64).reshape(3, 3)
 
+        K = np.asarray(info_msg.k, dtype=np.float64).reshape(3, 3)
         result = self._inference[self._port_type](img, K)
-        if result is not None:
+
+        if result is None:
+            self._logger.warn("[vision] PnP failed — bad keypoints", throttle_duration_sec=2.0)
+        else:
             T_cam_base = self._lookup_transform_mat(self.BASE_FRAME, self._cam_optical_frame)
-            if T_cam_base is not None:
+            if T_cam_base is None:
+                self._logger.warn(f"[vision] TF lookup failed: {self.BASE_FRAME} <- {self._cam_optical_frame}", throttle_duration_sec=2.0)
+            else:
                 T_port_cam = np.eye(4)
                 T_port_cam[:3, :3] = result["R_port_cam"]
                 T_port_cam[:3, 3] = result["t_port_cam"]
@@ -96,7 +103,7 @@ class VisionPortPoseEstimator(PortPoseEstimator):
                 self._last_port_pose = _mat_to_pose(T_port_base)
 
         if self._last_port_pose is None:
-            self._logger.warn("[vision estimator] no valid port pose yet", throttle_duration_sec=2.0)
+            self._logger.warn("[vision] no valid port pose yet", throttle_duration_sec=2.0)
         return self._last_port_pose
 
     def get_plug_tip_pose(self, observation: Optional[Observation]) -> Optional[Pose]:
