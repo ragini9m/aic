@@ -67,7 +67,7 @@ class VisionPortPoseEstimator(PortPoseEstimator):
             f"[vision estimator] port_type={self._port_type} "
             f"plug_frame={self._plug_frame}"
         )
-        return self._wait_for_tf(self._plug_frame, timeout_sec=10.0)
+        return True
 
     # --- queries ----------------------------------------------------------
 

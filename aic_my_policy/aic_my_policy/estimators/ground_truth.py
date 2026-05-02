@@ -35,10 +35,6 @@ class GroundTruthPortPoseEstimator(PortPoseEstimator):
         self._logger.info(
             f"[GT estimator] port_frame={self._port_frame} plug_frame={self._plug_frame}"
         )
-        for frame in (self._port_frame, self._plug_frame):
-            if not self._wait_for_tf(frame, timeout_sec=10.0):
-                self._logger.error(f"[GT estimator] TF '{frame}' unavailable.")
-                return False
         return True
 
     def get_port_pose(self, observation: Optional[Observation]) -> Optional[Pose]:
