@@ -52,10 +52,12 @@ class VisionPortPoseEstimator(PortPoseEstimator):
         self._port_type: Optional[str] = None
         self._plug_frame: Optional[str] = None
         self._cam_optical_frame = f"{self.CAMERA}_camera_optical_frame"
+        self._last_port_pose = None
 
     # --- lifecycle --------------------------------------------------------
 
     def initialize(self, task: Task) -> bool:
+        self._last_port_pose = None
         self._port_type = task.port_type
         if self._port_type not in self._inference:
             self._logger.error(f"No weights loaded for port_type={self._port_type!r}")
@@ -84,22 +86,18 @@ class VisionPortPoseEstimator(PortPoseEstimator):
         K = np.asarray(info_msg.k, dtype=np.float64).reshape(3, 3)
 
         result = self._inference[self._port_type](img, K)
-        if result is None:
-            return None
+        if result is not None:
+            T_cam_base = self._lookup_transform_mat(self.BASE_FRAME, self._cam_optical_frame)
+            if T_cam_base is not None:
+                T_port_cam = np.eye(4)
+                T_port_cam[:3, :3] = result["R_port_cam"]
+                T_port_cam[:3, 3] = result["t_port_cam"]
+                T_port_base = T_cam_base @ T_port_cam
+                self._last_port_pose = _mat_to_pose(T_port_base)
 
-        R_port_cam = result["R_port_cam"]
-        t_port_cam = result["t_port_cam"]
-
-        T_cam_base = self._lookup_transform_mat(self.BASE_FRAME, self._cam_optical_frame)
-        if T_cam_base is None:
-            return None
-
-        T_port_cam = np.eye(4)
-        T_port_cam[:3, :3] = R_port_cam
-        T_port_cam[:3, 3] = t_port_cam
-        T_port_base = T_cam_base @ T_port_cam
-
-        return _mat_to_pose(T_port_base)
+        if self._last_port_pose is None:
+            self._logger.warn("[vision estimator] no valid port pose yet", throttle_duration_sec=2.0)
+        return self._last_port_pose
 
     def get_plug_tip_pose(self, observation: Optional[Observation]) -> Optional[Pose]:
         if self._plug_frame is None:
