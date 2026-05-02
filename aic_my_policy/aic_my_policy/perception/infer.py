@@ -11,6 +11,7 @@ from typing import Optional
 import cv2
 import numpy as np
 import torch
+from PIL import Image
 
 from aic_my_policy.perception.dataset import PortKeypointDataset
 from aic_my_policy.perception.keypoints import PORT_KEYPOINTS
@@ -27,7 +28,7 @@ class PortKeypointInference:
         self,
         weights_path: str | Path,
         port_type: str,
-        device: str = "cuda" if torch.cuda.is_available() else "cpu",
+        device: str = "cpu",
     ):
         ckpt = torch.load(weights_path, map_location=device)
         self.port_type = ckpt.get("port_type", port_type)
@@ -43,7 +44,7 @@ class PortKeypointInference:
         K: np.ndarray,                  # 3x3 intrinsics in original image coords
     ) -> Optional[dict]:
         H_orig, W_orig = image_rgb.shape[:2]
-        img_resized = cv2.resize(image_rgb, (INPUT_SIZE[1], INPUT_SIZE[0]), interpolation=cv2.INTER_AREA)
+        img_resized = np.array(Image.fromarray(image_rgb).resize((INPUT_SIZE[1], INPUT_SIZE[0]), Image.LANCZOS))
 
         img_f = img_resized.astype(np.float32) / 255.0
         img_f = (img_f - PortKeypointDataset.IMG_MEAN) / PortKeypointDataset.IMG_STD
