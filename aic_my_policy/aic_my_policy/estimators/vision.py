@@ -102,7 +102,14 @@ class VisionPortPoseEstimator(PortPoseEstimator):
                 T_port_cam[:3, :3] = result["R_port_cam"]
                 T_port_cam[:3, 3] = result["t_port_cam"]
                 T_port_base = T_cam_base @ T_port_cam
-                self._last_port_pose = _mat_to_pose(T_port_base)
+                px, py, pz = T_port_base[0, 3], T_port_base[1, 3], T_port_base[2, 3]
+                if 0.0 <= px <= 0.45 and -0.40 <= py <= 0.20 and 1.00 <= pz <= 1.40:
+                    self._last_port_pose = _mat_to_pose(T_port_base)
+                else:
+                    self._logger.warn(
+                        f"[vision] estimate rejected ({px:.3f},{py:.3f},{pz:.3f}) outside workspace",
+                        throttle_duration_sec=2.0,
+                    )
 
         if self._last_port_pose is None:
             self._logger.warn("[vision] no valid port pose yet", throttle_duration_sec=2.0)
