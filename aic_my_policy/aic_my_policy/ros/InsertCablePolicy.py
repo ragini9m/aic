@@ -222,15 +222,23 @@ class InsertCablePolicy(Policy):
                 # First align laterally at the current safe height. This avoids
                 # coupling noisy z estimates with lateral motion near the board.
                 keep_current_plug_z = plug.position.z - port.position.z
+                lateral_error = (
+                    (plug.position.x - port.position.x) ** 2
+                    + (plug.position.y - port.position.y) ** 2
+                ) ** 0.5
+                self.get_logger().info(
+                    f"[xy_align] current_plug_xy=({plug.position.x:.4f},{plug.position.y:.4f}) "
+                    f"target_port_xy=({port.position.x:.4f},{port.position.y:.4f}) "
+                    f"err={lateral_error:.4f}m "
+                    f"tcp_xy=({gripper.position.x:.4f},{gripper.position.y:.4f}) "
+                    f"fixed_port_z={port.position.z:.4f}",
+                    throttle_duration_sec=0.5,
+                )
                 self._command(
                     move_robot, APPROACH, port, plug, gripper,
                     z_offset=keep_current_plug_z,
                     slerp_fraction=min(1.0, elapsed_in_state / max(0.1, XY_ALIGN_BUDGET_S)),
                 )
-                lateral_error = (
-                    (plug.position.x - port.position.x) ** 2
-                    + (plug.position.y - port.position.y) ** 2
-                ) ** 0.5
                 if lateral_error <= XY_ALIGN_TOLERANCE_M or elapsed_in_state > XY_ALIGN_BUDGET_S:
                     state, state_entered = State.APPROACH, self.time_now()
                     send_feedback("APPROACH")
@@ -286,8 +294,7 @@ class InsertCablePolicy(Policy):
 
             self.sleep_for(LOOP_DT)
 
-        if state == State.ABORT:
-            self._hold_current_pose(get_observation(), move_robot)
+        self._hold_current_pose(get_observation(), move_robot)
 
         self.get_logger().info(f"insert_cable() exit state={state.value} success={success}")
         return success
@@ -344,6 +351,13 @@ class InsertCablePolicy(Policy):
             gripper_pose=gripper_pose,
             plug_pose=plug_pose,
             orientation=orientation,
+        )
+        self.get_logger().info(
+            f"[command:{profile.name}] plug_xy=({plug_pose.position.x:.4f},{plug_pose.position.y:.4f}) "
+            f"target_plug_xy=({plug_tip_target[0]:.4f},{plug_tip_target[1]:.4f}) "
+            f"target_gripper_xy=({gripper_target.position.x:.4f},{gripper_target.position.y:.4f}) "
+            f"target_plug_z={plug_tip_target[2]:.4f}",
+            throttle_duration_sec=1.0,
         )
         cmd: MotionUpdate = make_motion_update(
             pose=gripper_target,
