@@ -58,9 +58,9 @@ MISSING_POSE_ABORT_S = 5.0
 SAFE_Z = 0.35           # lift to this height before moving laterally (m in base_link)
 
 # Port position sanity bounds (base_link frame). Reject vision estimates outside these.
-PORT_X_BOUNDS = (-0.70, 0.20)
-PORT_Y_BOUNDS = (-0.20, 0.50)
-PORT_Z_BOUNDS = (-0.15, 0.45)
+PORT_X_BOUNDS = (-1.00, 1.00)
+PORT_Y_BOUNDS = (-0.50, 1.00)
+PORT_Z_BOUNDS = (-0.30, 0.80)
 
 SEARCH_DESCENT_M_PER_S = 0.004   # slow sink while spiraling (4 mm/s)
 SEAT_DESCENT_M_PER_S = 0.010     # faster once seated (10 mm/s)
@@ -266,6 +266,9 @@ class InsertCablePolicy(Policy):
 
             self.sleep_for(LOOP_DT)
 
+        if state == State.ABORT:
+            self._hold_current_pose(get_observation(), move_robot)
+
         self.get_logger().info(f"insert_cable() exit state={state.value} success={success}")
         return success
 
@@ -275,6 +278,24 @@ class InsertCablePolicy(Policy):
         if observation is None:
             return None
         return observation.controller_state.tcp_pose
+
+    def _hold_current_pose(
+        self,
+        observation: Optional[Observation],
+        move_robot: MoveRobotCallback,
+    ) -> None:
+        gripper_pose = self._gripper_pose(observation)
+        if gripper_pose is None:
+            return
+        cmd = make_motion_update(
+            pose=gripper_pose,
+            profile=APPROACH,
+            stamp=self.time_now().to_msg(),
+        )
+        try:
+            move_robot(motion_update=cmd)
+        except Exception as ex:
+            self.get_logger().warn(f"hold-current command failed during abort: {ex}")
 
     def _command(
         self,

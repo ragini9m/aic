@@ -54,9 +54,9 @@ class VisionPortPoseEstimator(PortPoseEstimator):
             "sfp": PortKeypointInference(sfp_weights, port_type="sfp"),
             "sc":  PortKeypointInference(sc_weights,  port_type="sc"),
         }
-        self._min_keypoint_confidence = float(_param("vision_min_keypoint_confidence", 0.20))
-        self._max_reprojection_error_px = float(_param("vision_max_reprojection_error_px", 12.0))
-        self._max_stale_age_s = float(_param("vision_max_stale_age_s", 0.75))
+        self._min_keypoint_confidence = float(_param("vision_min_keypoint_confidence", 0.05))
+        self._max_reprojection_error_px = float(_param("vision_max_reprojection_error_px", 25.0))
+        self._max_stale_age_s = float(_param("vision_max_stale_age_s", 2.0))
         self._debug_gt = bool(_param("vision_debug_gt", False))
         self._gt_error_gate = bool(_param("vision_gt_error_gate", False))
         self._max_gt_error_m = float(_param("vision_max_gt_error_m", 0.02))
@@ -120,6 +120,11 @@ class VisionPortPoseEstimator(PortPoseEstimator):
         else:
             min_score = float(np.min(result.get("keypoint_scores", [0.0])))
             reproj = float(result.get("reprojection_error_px", float("inf")))
+            self._logger.info(
+                f"[vision] scores={np.array2string(np.array(result.get('keypoint_scores', [])), precision=2)} "
+                f"reproj={reproj:.1f}px",
+                throttle_duration_sec=1.0,
+            )
             if min_score < self._min_keypoint_confidence:
                 self._logger.warn(
                     f"[vision] estimate rejected: keypoint confidence {min_score:.3f} "
@@ -138,15 +143,11 @@ class VisionPortPoseEstimator(PortPoseEstimator):
             if T_cam_base is None:
                 self._logger.warn(f"[vision] TF lookup failed: {self.BASE_FRAME} <- {cam_frame}", throttle_duration_sec=2.0)
             else:
-                T_port_cam = np.eye(4)
-                T_port_cam[:3, :3] = result["R_port_cam"]
-                T_port_cam[:3, 3] = result["t_port_cam"]
-                T_port_base = T_cam_base @ T_port_cam
-                px, py, pz = T_port_base[0, 3], T_port_base[1, 3], T_port_base[2, 3]
-                if -0.70 <= px <= 0.20 and -0.20 <= py <= 0.50 and -0.15 <= pz <= 0.45:
-                    if not self._passes_gt_debug_gate(T_port_base):
-                        return self._fresh_last_port_pose()
+                selected = self._select_pnp_candidate(result, T_cam_base)
+                if selected is not None:
+                    T_port_base, candidate = selected
                     alpha = 0.3  # EMA weight for new measurement (lower = smoother)
+                    px, py, pz = T_port_base[0, 3], T_port_base[1, 3], T_port_base[2, 3]
                     if self._smoothed_port_xyz is None:
                         self._smoothed_port_xyz = np.array([px, py, pz])
                     else:
@@ -160,11 +161,14 @@ class VisionPortPoseEstimator(PortPoseEstimator):
                     smoothed.position.z = float(self._smoothed_port_xyz[2])
                     self._last_port_pose = smoothed
                     self._last_port_stamp_ns = self._clock.now().nanoseconds
-                else:
-                    self._logger.warn(
-                        f"[vision] estimate rejected ({px:.3f},{py:.3f},{pz:.3f}) outside workspace",
-                        throttle_duration_sec=2.0,
+                    self._logger.info(
+                        f"[vision] accepted {candidate.get('solver', 'PNP')} "
+                        f"pose=({px:.3f},{py:.3f},{pz:.3f}) "
+                        f"reproj={candidate['reprojection_error_px']:.1f}px",
+                        throttle_duration_sec=1.0,
                     )
+                else:
+                    return self._fresh_last_port_pose()
 
         if self._last_port_pose is None:
             self._logger.warn("[vision] no valid port pose yet", throttle_duration_sec=2.0)
@@ -219,6 +223,65 @@ class VisionPortPoseEstimator(PortPoseEstimator):
             )
             return None
         return self._last_port_pose
+
+    def _select_pnp_candidate(
+        self,
+        result: dict,
+        T_cam_base: np.ndarray,
+    ) -> Optional[tuple[np.ndarray, dict]]:
+        candidates = result.get("pnp_candidates", [])
+        if not candidates:
+            candidates = [
+                {
+                    "solver": "PNP",
+                    "R_port_cam": result["R_port_cam"],
+                    "t_port_cam": result["t_port_cam"],
+                    "reprojection_error_px": result["reprojection_error_px"],
+                }
+            ]
+
+        viable: list[tuple[np.ndarray, dict]] = []
+        rejected = []
+        for candidate in candidates:
+            if float(candidate["reprojection_error_px"]) > self._max_reprojection_error_px:
+                rejected.append((candidate, "reprojection"))
+                continue
+            T_port_cam = np.eye(4)
+            T_port_cam[:3, :3] = candidate["R_port_cam"]
+            T_port_cam[:3, 3] = candidate["t_port_cam"]
+            T_port_base = T_cam_base @ T_port_cam
+            px, py, pz = T_port_base[0, 3], T_port_base[1, 3], T_port_base[2, 3]
+            if not (-0.70 <= px <= 0.20 and -0.20 <= py <= 0.50 and -0.15 <= pz <= 0.45):
+                rejected.append((candidate, f"workspace ({px:.3f},{py:.3f},{pz:.3f})"))
+                continue
+            if not self._passes_gt_debug_gate(T_port_base):
+                rejected.append((candidate, "gt_gate"))
+                continue
+            viable.append((T_port_base, candidate))
+
+        if viable:
+            if self._smoothed_port_xyz is not None:
+                return min(
+                    viable,
+                    key=lambda item: (
+                        float(item[1]["reprojection_error_px"])
+                        + 100.0 * float(np.linalg.norm(item[0][:3, 3] - self._smoothed_port_xyz))
+                    ),
+                )
+            return min(viable, key=lambda item: float(item[1]["reprojection_error_px"]))
+
+        summaries = []
+        for candidate, reason in rejected[:4]:
+            summaries.append(
+                f"{candidate.get('solver', 'PNP')}:{reason}:"
+                f"{float(candidate['reprojection_error_px']):.1f}px"
+            )
+        self._logger.warn(
+            "[vision] all PnP candidates rejected "
+            + ("; ".join(summaries) if summaries else "(none)"),
+            throttle_duration_sec=2.0,
+        )
+        return None
 
     def _passes_gt_debug_gate(self, T_port_base: np.ndarray) -> bool:
         if not (self._debug_gt or self._gt_error_gate):

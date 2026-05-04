@@ -24,9 +24,9 @@ The estimator class is chosen at `__init__`; no behavioral change while `estimat
 Additional vision guard/debug parameters:
 
 ```
-vision_min_keypoint_confidence : minimum per-keypoint heatmap confidence, default 0.20
-vision_max_reprojection_error_px : maximum mean PnP reprojection error, default 12.0
-vision_max_stale_age_s : maximum age of reused port estimate, default 0.75
+vision_min_keypoint_confidence : minimum per-keypoint heatmap confidence, default 0.05
+vision_max_reprojection_error_px : maximum mean PnP reprojection error, default 25.0
+vision_max_stale_age_s : maximum age of reused port estimate, default 2.0
 vision_debug_gt : log vision-vs-GT error when GT TF is available, default false
 vision_gt_error_gate : reject vision estimates whose GT error is too high, default false
 vision_max_gt_error_m : GT gate threshold, default 0.02

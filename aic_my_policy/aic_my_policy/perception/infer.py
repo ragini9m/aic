@@ -17,9 +17,8 @@ from aic_my_policy.perception.dataset import PortKeypointDataset
 from aic_my_policy.perception.keypoints import PORT_KEYPOINTS
 from aic_my_policy.perception.model import (
     INPUT_SIZE,
+    OUTPUT_STRIDE,
     KeypointHeatmapNet,
-    heatmap_peaks_to_pixels,
-    soft_argmax_2d,
 )
 
 
@@ -55,9 +54,8 @@ class PortKeypointInference:
 
         with torch.no_grad():
             heatmaps = self.model(img_t)
-            peak_scores = torch.sigmoid(heatmaps).flatten(2).amax(dim=-1)
-            peaks_hm = soft_argmax_2d(heatmaps)                 # (1, K, 2) in heatmap coords
-            peaks_input = heatmap_peaks_to_pixels(peaks_hm)      # in 256x256 coords
+            heatmap_probs = torch.sigmoid(heatmaps)
+            peaks_input, peak_scores = _heatmap_argmax_to_input_pixels(heatmap_probs)
             peaks_input = peaks_input[0].cpu().numpy()
             peak_scores = peak_scores[0].cpu().numpy()
 
@@ -67,37 +65,51 @@ class PortKeypointInference:
         uv_full[:, 0] = peaks_input[:, 0] * sx
         uv_full[:, 1] = peaks_input[:, 1] * sy
 
-        pnp = _solve_pnp_best(
+        candidates = _solve_pnp_candidates(
             object_points=self.kpts_3d,
             image_points=uv_full.astype(np.float64),
             K=K,
         )
-        if pnp is None:
+        if not candidates:
             return None
-        rvec, tvec, reprojection_error = pnp
-        R, _ = cv2.Rodrigues(rvec)
+        best = min(candidates, key=lambda c: c["reprojection_error_px"])
         return {
-            "R_port_cam": R,                # port-in-camera rotation
-            "t_port_cam": tvec.reshape(3),  # port-in-camera translation
+            "R_port_cam": best["R_port_cam"],          # port-in-camera rotation
+            "t_port_cam": best["t_port_cam"],          # port-in-camera translation
             "keypoints_uv": uv_full,
             "keypoint_scores": peak_scores,
-            "reprojection_error_px": reprojection_error,
+            "reprojection_error_px": best["reprojection_error_px"],
+            "pnp_candidates": candidates,
         }
 
 
-def _solve_pnp_best(
+def _heatmap_argmax_to_input_pixels(
+    heatmaps: torch.Tensor,
+) -> tuple[torch.Tensor, torch.Tensor]:
+    """Return hard heatmap peaks in input-image pixel coordinates."""
+    b, k, h, w = heatmaps.shape
+    flat = heatmaps.flatten(2)
+    scores, idx = flat.max(dim=-1)
+    y = torch.div(idx, w, rounding_mode="floor").to(dtype=heatmaps.dtype)
+    x = (idx % w).to(dtype=heatmaps.dtype)
+    peaks = torch.stack([x, y], dim=-1) * float(OUTPUT_STRIDE)
+    return peaks, scores
+
+
+def _solve_pnp_candidates(
     object_points: np.ndarray,
     image_points: np.ndarray,
     K: np.ndarray,
-) -> Optional[tuple[np.ndarray, np.ndarray, float]]:
-    """Solve planar PnP and choose the candidate with lowest reprojection error."""
-    candidates: list[tuple[np.ndarray, np.ndarray, float]] = []
+) -> list[dict]:
+    """Return plausible planar PnP candidates sorted later by the caller."""
+    candidates: list[dict] = []
 
-    # The port keypoints are coplanar, so IPPE gives better initial solutions
-    # than the generic iterative method when heatmaps are noisy.
-    for flag in (cv2.SOLVEPNP_IPPE, cv2.SOLVEPNP_ITERATIVE):
+    for flag, name in (
+        (cv2.SOLVEPNP_IPPE, "IPPE"),
+        (cv2.SOLVEPNP_ITERATIVE, "ITERATIVE"),
+    ):
         try:
-            ok, rvec, tvec = cv2.solvePnP(
+            result = cv2.solvePnPGeneric(
                 objectPoints=object_points,
                 imagePoints=image_points,
                 cameraMatrix=K,
@@ -106,14 +118,26 @@ def _solve_pnp_best(
             )
         except cv2.error:
             continue
-        if not ok or tvec.reshape(3)[2] <= 0.0:
+        ok = bool(result[0])
+        if not ok:
             continue
-        err = _mean_reprojection_error(object_points, image_points, K, rvec, tvec)
-        candidates.append((rvec, tvec, err))
+        rvecs = result[1]
+        tvecs = result[2]
+        for rvec, tvec in zip(rvecs, tvecs):
+            if tvec.reshape(3)[2] <= 0.0:
+                continue
+            err = _mean_reprojection_error(object_points, image_points, K, rvec, tvec)
+            R, _ = cv2.Rodrigues(rvec)
+            candidates.append(
+                {
+                    "solver": name,
+                    "R_port_cam": R,
+                    "t_port_cam": tvec.reshape(3),
+                    "reprojection_error_px": err,
+                }
+            )
 
-    if not candidates:
-        return None
-    return min(candidates, key=lambda c: c[2])
+    return candidates
 
 
 def _mean_reprojection_error(
