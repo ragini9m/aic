@@ -58,6 +58,7 @@ class VisionPortPoseEstimator(PortPoseEstimator):
 
     def initialize(self, task: Task) -> bool:
         self._last_port_pose = None
+        self._smoothed_port_xyz = None   # EMA-smoothed position
         self._plug_tcp_delta = None
         self._port_type = task.port_type
         self._gt_port_frame = f"task_board/{task.target_module_name}/{task.port_name}_link"
@@ -105,7 +106,19 @@ class VisionPortPoseEstimator(PortPoseEstimator):
                 T_port_base = T_cam_base @ T_port_cam
                 px, py, pz = T_port_base[0, 3], T_port_base[1, 3], T_port_base[2, 3]
                 if -0.70 <= px <= 0.20 and -0.20 <= py <= 0.50 and -0.15 <= pz <= 0.45:
-                    self._last_port_pose = _mat_to_pose(T_port_base)
+                    alpha = 0.3  # EMA weight for new measurement (lower = smoother)
+                    if self._smoothed_port_xyz is None:
+                        self._smoothed_port_xyz = np.array([px, py, pz])
+                    else:
+                        self._smoothed_port_xyz = (
+                            alpha * np.array([px, py, pz]) +
+                            (1 - alpha) * self._smoothed_port_xyz
+                        )
+                    smoothed = _mat_to_pose(T_port_base)
+                    smoothed.position.x = float(self._smoothed_port_xyz[0])
+                    smoothed.position.y = float(self._smoothed_port_xyz[1])
+                    smoothed.position.z = float(self._smoothed_port_xyz[2])
+                    self._last_port_pose = smoothed
                 else:
                     self._logger.warn(
                         f"[vision] estimate rejected ({px:.3f},{py:.3f},{pz:.3f}) outside workspace",
