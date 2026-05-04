@@ -66,6 +66,13 @@ class VisionPortPoseEstimator(PortPoseEstimator):
         self._allow_tcp_plug_fallback = bool(
             _param("vision_allow_tcp_plug_fallback", True)
         )
+        self._latch_port_pose = bool(_param("vision_latch_port_pose", True))
+        self._latch_min_samples = int(_param("vision_latch_min_samples", 3))
+        self._use_fixed_port_z = bool(_param("vision_use_fixed_port_z", True))
+        self._fixed_port_z_base = {
+            "sfp": float(_param("sfp_fixed_port_z_base", 0.1335)),
+            "sc": float(_param("sc_fixed_port_z_base", 0.0145)),
+        }
         self._configured_plug_offsets_tcp = {
             "sfp": tuple(float(v) for v in _param("sfp_plug_tip_offset_tcp_xyz", [0.0, 0.0, 0.0])),
             "sc": tuple(float(v) for v in _param("sc_plug_tip_offset_tcp_xyz", [0.0, 0.0, 0.0])),
@@ -73,6 +80,8 @@ class VisionPortPoseEstimator(PortPoseEstimator):
         self._port_type: Optional[str] = None
         self._plug_frame: Optional[str] = None
         self._last_port_pose = None
+        self._latched_port_pose = None
+        self._pending_port_samples: list[Pose] = []
         self._last_port_stamp_ns: Optional[int] = None
         self._plug_tip_offset_tcp: Optional[tuple[float, float, float]] = None
 
@@ -80,6 +89,8 @@ class VisionPortPoseEstimator(PortPoseEstimator):
 
     def initialize(self, task: Task) -> bool:
         self._last_port_pose = None
+        self._latched_port_pose = None
+        self._pending_port_samples = []
         self._smoothed_port_xyz = None   # EMA-smoothed position
         self._last_port_stamp_ns = None
         self._plug_tip_offset_tcp = None
@@ -100,6 +111,8 @@ class VisionPortPoseEstimator(PortPoseEstimator):
     # --- queries ----------------------------------------------------------
 
     def get_port_pose(self, observation: Optional[Observation]) -> Optional[Pose]:
+        if self._latched_port_pose is not None:
+            return self._latched_port_pose
         if observation is None or self._port_type is None:
             self._logger.warn("[vision] observation or port_type is None", throttle_duration_sec=2.0)
             return None
@@ -162,11 +175,10 @@ class VisionPortPoseEstimator(PortPoseEstimator):
                     smoothed.position.x = float(self._smoothed_port_xyz[0])
                     smoothed.position.y = float(self._smoothed_port_xyz[1])
                     smoothed.position.z = float(self._smoothed_port_xyz[2])
-                    self._last_port_pose = smoothed
-                    self._last_port_stamp_ns = self._clock.now().nanoseconds
+                    self._accept_port_pose(smoothed)
                     self._logger.info(
                         f"[vision] accepted {candidate.get('solver', 'PNP')} "
-                        f"pose=({px:.3f},{py:.3f},{pz:.3f}) "
+                        f"raw_pose=({px:.3f},{py:.3f},{pz:.3f}) "
                         f"reproj={candidate['reprojection_error_px']:.1f}px",
                         throttle_duration_sec=1.0,
                     )
@@ -222,6 +234,8 @@ class VisionPortPoseEstimator(PortPoseEstimator):
     # --- helpers ----------------------------------------------------------
 
     def _fresh_last_port_pose(self) -> Optional[Pose]:
+        if self._latched_port_pose is not None:
+            return self._latched_port_pose
         if self._last_port_pose is None or self._last_port_stamp_ns is None:
             return None
         age_s = (self._clock.now().nanoseconds - self._last_port_stamp_ns) / 1e9
@@ -232,6 +246,48 @@ class VisionPortPoseEstimator(PortPoseEstimator):
             )
             return None
         return self._last_port_pose
+
+    def _accept_port_pose(self, pose: Pose) -> None:
+        pose = self._condition_port_pose(pose)
+        self._last_port_pose = pose
+        self._last_port_stamp_ns = self._clock.now().nanoseconds
+        if not self._latch_port_pose:
+            return
+
+        self._pending_port_samples.append(pose)
+        if len(self._pending_port_samples) < max(1, self._latch_min_samples):
+            self._logger.info(
+                f"[vision] collecting latch samples "
+                f"{len(self._pending_port_samples)}/{self._latch_min_samples}",
+                throttle_duration_sec=1.0,
+            )
+            return
+
+        xs = [p.position.x for p in self._pending_port_samples]
+        ys = [p.position.y for p in self._pending_port_samples]
+        zs = [p.position.z for p in self._pending_port_samples]
+        latched = Pose()
+        latched.position.x = float(np.median(xs))
+        latched.position.y = float(np.median(ys))
+        latched.position.z = float(np.median(zs))
+        latched.orientation = pose.orientation
+        self._latched_port_pose = latched
+        self._last_port_pose = latched
+        self._logger.info(
+            f"[vision] latched port pose=({latched.position.x:.3f},"
+            f"{latched.position.y:.3f},{latched.position.z:.3f}) "
+            f"from {len(self._pending_port_samples)} samples"
+        )
+
+    def _condition_port_pose(self, pose: Pose) -> Pose:
+        conditioned = Pose()
+        conditioned.position.x = pose.position.x
+        conditioned.position.y = pose.position.y
+        conditioned.position.z = pose.position.z
+        conditioned.orientation = pose.orientation
+        if self._use_fixed_port_z and self._port_type in self._fixed_port_z_base:
+            conditioned.position.z = self._fixed_port_z_base[self._port_type]
+        return conditioned
 
     def _select_pnp_candidate(
         self,
@@ -260,7 +316,8 @@ class VisionPortPoseEstimator(PortPoseEstimator):
             T_port_cam[:3, 3] = candidate["t_port_cam"]
             T_port_base = T_cam_base @ T_port_cam
             px, py, pz = T_port_base[0, 3], T_port_base[1, 3], T_port_base[2, 3]
-            if not (-0.70 <= px <= 0.20 and -0.20 <= py <= 0.50 and -0.15 <= pz <= 0.45):
+            z_for_bounds = self._fixed_port_z_base.get(self._port_type, pz) if self._use_fixed_port_z else pz
+            if not (-0.70 <= px <= 0.20 and -0.20 <= py <= 0.50 and -0.15 <= z_for_bounds <= 0.45):
                 rejected.append((candidate, f"workspace ({px:.3f},{py:.3f},{pz:.3f})"))
                 continue
             if not self._passes_gt_debug_gate(T_port_base):
