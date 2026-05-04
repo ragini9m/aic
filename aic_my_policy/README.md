@@ -7,7 +7,7 @@ This package will hold:
 1. A **vision-based impedance state-machine** base policy — approach, align, search, seat, verify — driven by a learned port-pose estimator, using the existing `aic_controller` impedance primitives (stiffness/damping matrices + feedforward wrench).
 2. A **residual RL policy** (SAC) trained in Gazebo with an asymmetric critic (actor sees estimator output; critic sees ground-truth `/tf` during training).
 
-The package currently contains a **stub policy** so we can verify the build + load path end-to-end before writing the real logic.
+The package currently contains a vision-selectable impedance state-machine policy. The GT estimator is useful for bring-up; the vision estimator is the path toward a submission-safe policy.
 
 ---
 
@@ -87,7 +87,7 @@ distrobox enter -r aic_eval -- /entrypoint.sh ground_truth:=true start_aic_engin
 
 > `ground_truth:=true` is only for bring-up — it makes later debugging easier. Final submissions must work with `ground_truth:=false`.
 
-### Terminal 2 — Run the stub policy
+### Terminal 2 — Run the policy
 
 ```bash
 cd ~/ws_aic/src/aic
@@ -107,18 +107,23 @@ In **Terminal 2** (`aic_model`):
 Loading policy module: aic_my_policy.ros.InsertCablePolicy
 Loaded policy module aic_my_policy.ros.InsertCablePolicy
 Using policy: InsertCablePolicy
-InsertCablePolicy.__init__() (skeleton stub)
+InsertCablePolicy ready (GroundTruthPortPoseEstimator).
 ...
-InsertCablePolicy.insert_cable() task=...
-Holding pose p=(x, y, z)
-InsertCablePolicy.insert_cable() returning True
+insert_cable() task=...
+(feedback) LIFT
+(feedback) APPROACH
+(feedback) ALIGN
+(feedback) SEARCH
+(feedback) SEAT
+(feedback) VERIFY
+insert_cable() exit state=DONE success=True
 ```
 
 In **Terminal 1** (eval env / engine):
 
 - Three trials run sequentially (SFP rail 0 → SFP rail 1 → SC).
 - Tier 1 should **pass** on every trial.
-- Tier 2 and Tier 3 should be **0** (the arm just holds position).
+- Tier 2 and Tier 3 depend on estimator accuracy and impedance tuning.
 - Results written to `~/aic_results/` (or `$AIC_RESULTS_DIR` if set).
 
 ---

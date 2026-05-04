@@ -53,6 +53,7 @@ ALIGN_BUDGET_S = 3.0
 SEARCH_BUDGET_S = 15.0
 SEAT_BUDGET_S = 8.0
 VERIFY_HOLD_S = 2.0
+MISSING_POSE_ABORT_S = 5.0
 
 SAFE_Z = 0.35           # lift to this height before moving laterally (m in base_link)
 
@@ -128,24 +129,44 @@ class InsertCablePolicy(Policy):
             self.get_logger().error("Estimator init failed.")
             return False
 
+        task_started = self.time_now()
         state = State.LIFT
         state_entered = self.time_now()
+        missing_pose_since = None
         send_feedback("LIFT")
         success = False
 
         while state not in (State.DONE, State.ABORT):
+            elapsed_task_s = (self.time_now() - task_started).nanoseconds / 1e9
+            if task.time_limit > 0 and elapsed_task_s >= max(0.0, task.time_limit - 1.0):
+                self.get_logger().error(
+                    f"[policy] aborting before task time limit ({elapsed_task_s:.1f}s/{task.time_limit}s)"
+                )
+                send_feedback("ABORT time_limit")
+                state = State.ABORT
+                break
+
             obs = get_observation()
             port = self._estimator.get_port_pose(obs)
             plug = self._estimator.get_plug_tip_pose(obs)
             gripper = self._gripper_pose(obs)
 
             if port is None or plug is None or gripper is None:
+                if missing_pose_since is None:
+                    missing_pose_since = self.time_now()
+                missing_s = (self.time_now() - missing_pose_since).nanoseconds / 1e9
                 self.get_logger().warn(
                     f"[policy] waiting: port={'ok' if port else 'NONE'} "
                     f"plug={'ok' if plug else 'NONE'} "
-                    f"gripper={'ok' if gripper else 'NONE'}",
+                    f"gripper={'ok' if gripper else 'NONE'} "
+                    f"missing_s={missing_s:.1f}",
                     throttle_duration_sec=2.0,
                 )
+                if missing_s >= MISSING_POSE_ABORT_S:
+                    self.get_logger().error("[policy] aborting after missing pose timeout")
+                    send_feedback("ABORT missing_pose")
+                    state = State.ABORT
+                    break
                 self.sleep_for(LOOP_DT)
                 continue
 
@@ -154,12 +175,22 @@ class InsertCablePolicy(Policy):
             if not (PORT_X_BOUNDS[0] <= px <= PORT_X_BOUNDS[1] and
                     PORT_Y_BOUNDS[0] <= py <= PORT_Y_BOUNDS[1] and
                     PORT_Z_BOUNDS[0] <= pz <= PORT_Z_BOUNDS[1]):
+                if missing_pose_since is None:
+                    missing_pose_since = self.time_now()
+                missing_s = (self.time_now() - missing_pose_since).nanoseconds / 1e9
                 self.get_logger().warn(
-                    f"[policy] port pose out of bounds ({px:.3f},{py:.3f},{pz:.3f}), skipping tick",
+                    f"[policy] port pose out of bounds ({px:.3f},{py:.3f},{pz:.3f}), "
+                    f"skipping tick missing_s={missing_s:.1f}",
                     throttle_duration_sec=2.0,
                 )
+                if missing_s >= MISSING_POSE_ABORT_S:
+                    self.get_logger().error("[policy] aborting after invalid port timeout")
+                    send_feedback("ABORT invalid_port")
+                    state = State.ABORT
+                    break
                 self.sleep_for(LOOP_DT)
                 continue
+            missing_pose_since = None
 
             elapsed_in_state = (self.time_now() - state_entered).nanoseconds / 1e9
 
@@ -212,7 +243,7 @@ class InsertCablePolicy(Policy):
                     xy_offset=(dx, dy),
                 )
                 timed_out = elapsed_in_state > SEARCH_BUDGET_S
-                passed_entrance = z < -0.002
+                passed_entrance = plug.position.z < (port.position.z - 0.002)
                 if timed_out or passed_entrance:
                     state, state_entered = State.SEAT, self.time_now()
                     send_feedback("SEAT")

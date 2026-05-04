@@ -33,7 +33,10 @@ class PortKeypointInference:
         ckpt = torch.load(weights_path, map_location=device)
         self.port_type = ckpt.get("port_type", port_type)
         self.device = device
-        self.model = KeypointHeatmapNet(num_keypoints=PORT_KEYPOINTS[self.port_type].shape[0])
+        self.model = KeypointHeatmapNet(
+            num_keypoints=PORT_KEYPOINTS[self.port_type].shape[0],
+            pretrained=False,
+        )
         self.model.load_state_dict(ckpt["model"])
         self.model.to(device).eval()
         self.kpts_3d = PORT_KEYPOINTS[self.port_type].astype(np.float64)
@@ -52,9 +55,11 @@ class PortKeypointInference:
 
         with torch.no_grad():
             heatmaps = self.model(img_t)
+            peak_scores = torch.sigmoid(heatmaps).flatten(2).amax(dim=-1)
             peaks_hm = soft_argmax_2d(heatmaps)                 # (1, K, 2) in heatmap coords
             peaks_input = heatmap_peaks_to_pixels(peaks_hm)      # in 256x256 coords
             peaks_input = peaks_input[0].cpu().numpy()
+            peak_scores = peak_scores[0].cpu().numpy()
 
         sx = W_orig / INPUT_SIZE[1]
         sy = H_orig / INPUT_SIZE[0]
@@ -62,18 +67,62 @@ class PortKeypointInference:
         uv_full[:, 0] = peaks_input[:, 0] * sx
         uv_full[:, 1] = peaks_input[:, 1] * sy
 
-        ok, rvec, tvec = cv2.solvePnP(
-            objectPoints=self.kpts_3d,
-            imagePoints=uv_full.astype(np.float64),
-            cameraMatrix=K,
-            distCoeffs=None,
-            flags=cv2.SOLVEPNP_ITERATIVE,
+        pnp = _solve_pnp_best(
+            object_points=self.kpts_3d,
+            image_points=uv_full.astype(np.float64),
+            K=K,
         )
-        if not ok:
+        if pnp is None:
             return None
+        rvec, tvec, reprojection_error = pnp
         R, _ = cv2.Rodrigues(rvec)
         return {
             "R_port_cam": R,                # port-in-camera rotation
             "t_port_cam": tvec.reshape(3),  # port-in-camera translation
             "keypoints_uv": uv_full,
+            "keypoint_scores": peak_scores,
+            "reprojection_error_px": reprojection_error,
         }
+
+
+def _solve_pnp_best(
+    object_points: np.ndarray,
+    image_points: np.ndarray,
+    K: np.ndarray,
+) -> Optional[tuple[np.ndarray, np.ndarray, float]]:
+    """Solve planar PnP and choose the candidate with lowest reprojection error."""
+    candidates: list[tuple[np.ndarray, np.ndarray, float]] = []
+
+    # The port keypoints are coplanar, so IPPE gives better initial solutions
+    # than the generic iterative method when heatmaps are noisy.
+    for flag in (cv2.SOLVEPNP_IPPE, cv2.SOLVEPNP_ITERATIVE):
+        try:
+            ok, rvec, tvec = cv2.solvePnP(
+                objectPoints=object_points,
+                imagePoints=image_points,
+                cameraMatrix=K,
+                distCoeffs=None,
+                flags=flag,
+            )
+        except cv2.error:
+            continue
+        if not ok or tvec.reshape(3)[2] <= 0.0:
+            continue
+        err = _mean_reprojection_error(object_points, image_points, K, rvec, tvec)
+        candidates.append((rvec, tvec, err))
+
+    if not candidates:
+        return None
+    return min(candidates, key=lambda c: c[2])
+
+
+def _mean_reprojection_error(
+    object_points: np.ndarray,
+    image_points: np.ndarray,
+    K: np.ndarray,
+    rvec: np.ndarray,
+    tvec: np.ndarray,
+) -> float:
+    projected, _ = cv2.projectPoints(object_points, rvec, tvec, K, None)
+    projected = projected.reshape(-1, 2)
+    return float(np.linalg.norm(projected - image_points, axis=1).mean())

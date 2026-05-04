@@ -21,6 +21,22 @@ sc_keypoint_weights  : path to SC  keypoint .pt checkpoint
 
 The estimator class is chosen at `__init__`; no behavioral change while `estimator=ground_truth`.
 
+Additional vision guard/debug parameters:
+
+```
+vision_min_keypoint_confidence : minimum per-keypoint heatmap confidence, default 0.20
+vision_max_reprojection_error_px : maximum mean PnP reprojection error, default 12.0
+vision_max_stale_age_s : maximum age of reused port estimate, default 0.75
+vision_debug_gt : log vision-vs-GT error when GT TF is available, default false
+vision_gt_error_gate : reject vision estimates whose GT error is too high, default false
+vision_max_gt_error_m : GT gate threshold, default 0.02
+vision_use_configured_plug_offsets : use configured TCP-frame plug offsets if TF is unavailable, default false
+sfp_plug_tip_offset_tcp_xyz : TCP-frame SFP plug-tip offset, default [0, 0, 0]
+sc_plug_tip_offset_tcp_xyz : TCP-frame SC plug-tip offset, default [0, 0, 0]
+```
+
+`vision_debug_gt` and `vision_gt_error_gate` are development-only. Keep them off for submission.
+
 ---
 
 ## Running with vision
@@ -29,8 +45,8 @@ The estimator class is chosen at `__init__`; no behavioral change while `estimat
 # Terminal 0 — Zenoh router
 pixi run ros2 run rmw_zenoh_cpp rmw_zenohd
 
-# Terminal 1 — Eval env. IMPORTANT: ground_truth:=false simulates the real eval.
-distrobox enter -r aic_eval -- /entrypoint.sh ground_truth:=false start_aic_engine:=true
+# Terminal 1 — Dev eval env with GT available for measuring vision error.
+distrobox enter -r aic_eval -- /entrypoint.sh ground_truth:=true start_aic_engine:=true
 
 # Terminal 2 — Policy with vision estimator
 pixi reinstall ros-kilted-aic-my-policy
@@ -38,11 +54,13 @@ pixi run ros2 run aic_model aic_model --ros-args \
     -p use_sim_time:=true \
     -p policy:=aic_my_policy.ros.InsertCablePolicy \
     -p estimator:=vision \
+    -p vision_debug_gt:=true \
+    -p vision_gt_error_gate:=true \
     -p sfp_keypoint_weights:=/home/$USER/aic_data/models/sfp_keypoints.pt \
     -p sc_keypoint_weights:=/home/$USER/aic_data/models/sc_keypoints.pt
 ```
 
-> The plug pose is still read from `/tf`. You'll want `ground_truth:=true` for that in this intermediate milestone. A fully eval-ready version (no TF at all) requires an added calibration step at task start; see the TODO in `estimators/vision.py`.
+> The plug pose can still be calibrated from `/tf` during development. With `ground_truth:=false`, either provide configured TCP-frame plug-tip offsets or the policy will abort instead of pretending the plug tip equals the TCP.
 
 ---
 
