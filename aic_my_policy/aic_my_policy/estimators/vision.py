@@ -104,7 +104,7 @@ class VisionPortPoseEstimator(PortPoseEstimator):
                 T_port_cam[:3, 3] = result["t_port_cam"]
                 T_port_base = T_cam_base @ T_port_cam
                 px, py, pz = T_port_base[0, 3], T_port_base[1, 3], T_port_base[2, 3]
-                if 0.0 <= px <= 0.45 and -0.40 <= py <= 0.20 and 1.00 <= pz <= 1.40:
+                if -0.70 <= px <= 0.20 and -0.20 <= py <= 0.50 and -0.15 <= pz <= 0.45:
                     self._last_port_pose = _mat_to_pose(T_port_base)
                 else:
                     self._logger.warn(

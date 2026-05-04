@@ -54,12 +54,12 @@ SEARCH_BUDGET_S = 15.0
 SEAT_BUDGET_S = 8.0
 VERIFY_HOLD_S = 2.0
 
-SAFE_Z = 1.35           # lift to this height before moving laterally (m in base_link)
+SAFE_Z = 0.35           # lift to this height before moving laterally (m in base_link)
 
 # Port position sanity bounds (base_link frame). Reject vision estimates outside these.
-PORT_X_BOUNDS = (0.00, 0.45)
-PORT_Y_BOUNDS = (-0.40, 0.20)
-PORT_Z_BOUNDS = (1.00, 1.40)
+PORT_X_BOUNDS = (-0.70, 0.20)
+PORT_Y_BOUNDS = (-0.20, 0.50)
+PORT_Z_BOUNDS = (-0.15, 0.45)
 
 SEARCH_DESCENT_M_PER_S = 0.004   # slow sink while spiraling (4 mm/s)
 SEAT_DESCENT_M_PER_S = 0.010     # faster once seated (10 mm/s)
