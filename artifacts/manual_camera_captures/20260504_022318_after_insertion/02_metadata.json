@@ -1,0 +1,193 @@
+{
+  "capture_index": 2,
+  "capture_time": "2026-05-04T02:23:19.709479",
+  "images": {
+    "left": {
+      "topic_stamp": {
+        "sec": 781,
+        "nanosec": 250000000
+      },
+      "frame_id": "left_camera/optical",
+      "width": 1152,
+      "height": 1024,
+      "encoding": "rgb8",
+      "step": 3456,
+      "path": "/home/optimus/ws_aic/camera_captures/20260504_022318_after_insertion/02_left.ppm"
+    },
+    "center": {
+      "topic_stamp": {
+        "sec": 781,
+        "nanosec": 300000000
+      },
+      "frame_id": "center_camera/optical",
+      "width": 1152,
+      "height": 1024,
+      "encoding": "rgb8",
+      "step": 3456,
+      "path": "/home/optimus/ws_aic/camera_captures/20260504_022318_after_insertion/02_center.ppm"
+    },
+    "right": {
+      "topic_stamp": {
+        "sec": 781,
+        "nanosec": 250000000
+      },
+      "frame_id": "right_camera/optical",
+      "width": 1152,
+      "height": 1024,
+      "encoding": "rgb8",
+      "step": 3456,
+      "path": "/home/optimus/ws_aic/camera_captures/20260504_022318_after_insertion/02_right.ppm"
+    }
+  },
+  "cameras": {
+    "left": {
+      "width": 1152,
+      "height": 1024,
+      "distortion_model": "plumb_bob",
+      "d": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "k": [
+        1236.6316680908203,
+        0.0,
+        576.0,
+        0.0,
+        1236.6314697265625,
+        512.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "r": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "p": [
+        1236.6316680908203,
+        0.0,
+        576.0,
+        0.0,
+        0.0,
+        1236.6314697265625,
+        512.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0
+      ]
+    },
+    "center": {
+      "width": 1152,
+      "height": 1024,
+      "distortion_model": "plumb_bob",
+      "d": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "k": [
+        1236.6316680908203,
+        0.0,
+        576.0,
+        0.0,
+        1236.6314697265625,
+        512.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "r": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "p": [
+        1236.6316680908203,
+        0.0,
+        576.0,
+        0.0,
+        0.0,
+        1236.6314697265625,
+        512.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0
+      ]
+    },
+    "right": {
+      "width": 1152,
+      "height": 1024,
+      "distortion_model": "plumb_bob",
+      "d": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "k": [
+        1236.6316680908203,
+        0.0,
+        576.0,
+        0.0,
+        1236.6314697265625,
+        512.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "r": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "p": [
+        1236.6316680908203,
+        0.0,
+        576.0,
+        0.0,
+        0.0,
+        1236.6314697265625,
+        512.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0
+      ]
+    }
+  },
+  "image_paths": {
+    "left": "/home/optimus/ws_aic/camera_captures/20260504_022318_after_insertion/02_left.ppm",
+    "center": "/home/optimus/ws_aic/camera_captures/20260504_022318_after_insertion/02_center.ppm",
+    "right": "/home/optimus/ws_aic/camera_captures/20260504_022318_after_insertion/02_right.ppm"
+  }
+}

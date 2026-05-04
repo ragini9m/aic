@@ -600,15 +600,270 @@ Implications:
   - SFP: detect the NIC/card assembly and green port rectangles, then choose `sfp_port_0` or `sfp_port_1` by task name and observed ordering.
 - Avoid using ground-truth TF or scoring topics in the runtime policy.
 
+## Offline Perception Analysis
+
+Implemented:
+
+```text
+tools/analyze_snapshots.py
+```
+
+Purpose:
+
+- Read saved legal camera snapshots from `artifacts/perception_snapshot_20260503_005954/`.
+- Run first-pass heuristic detectors for SC and SFP ports.
+- Write annotated PNGs and machine-readable JSON reports.
+- Stay completely offline: no ROS node, no simulator access, no robot commands.
+
+Command run from repo root:
+
+```bash
+python3 tools/analyze_snapshots.py
+```
+
+Analyze any newer snapshot run:
+
+```bash
+python3 tools/analyze_snapshots.py --input artifacts/perception_snapshot_<run_timestamp>
+```
+
+If `--output` is omitted, the script writes to:
+
+```text
+artifacts/perception_analysis_<run_timestamp>
+```
+
+Output:
+
+```text
+artifacts/perception_analysis_20260503_005954/
+  detection_contact_sheet.png
+  summary.json
+  task_1_sc_to_sc_port_1_sc_port_base/
+    00_left_annotated.png
+    00_center_annotated.png
+    00_right_annotated.png
+    detections.json
+  task_1_sfp_to_nic_card_mount_0_sfp_port_0/
+    ...
+  task_1_sfp_to_nic_card_mount_1_sfp_port_0/
+    ...
+```
+
+The script now analyzes all saved frames per task (`00`, `01`, `02`) and reports centroid drift for the selected detection.
+
+Detector behavior:
+
+- SC detector segments bright cyan/blue high-saturation connected components.
+- SFP detector segments greenish connected components, then prefers matched horizontal pairs of rectangular port openings in the center camera.
+- For the current center-camera view, `sfp_port_0` is treated as the right-hand opening of the matched pair. This is based on the current NIC mount visual and should be validated under more randomized views before motion.
+
+Observed selected detections:
+
+```text
+task_1_sc_to_sc_port_1_sc_port_base:
+  selected center centroid=[283.19, 236.75], bbox=[262, 192, 305, 281]
+
+task_1_sfp_to_nic_card_mount_0_sfp_port_0:
+  selected center centroid=[537.37, 511.44], bbox=[517, 510, 558, 513]
+
+task_1_sfp_to_nic_card_mount_1_sfp_port_0:
+  selected center centroid=[534.89, 384.54], bbox=[513, 381, 556, 388]
+```
+
+Centroid stability verification across saved frames:
+
+```text
+task_1_sc_to_sc_port_1_sc_port_base:
+  same selected camera: true
+  max centroid drift: 0.283 px
+  status: stable
+
+task_1_sfp_to_nic_card_mount_0_sfp_port_0:
+  same selected camera: true
+  max centroid drift: 0.143 px
+  status: stable
+
+task_1_sfp_to_nic_card_mount_1_sfp_port_0:
+  same selected camera: true
+  max centroid drift: 1.703 px
+  status: stable
+```
+
+Interpretation:
+
+- The selected centroid is repeatable across the three saved no-motion frames.
+- This confirms temporal stability for the current snapshot run.
+- It does not yet prove the centroid is the true 3D insertion pose or that the heuristic generalizes to new randomized board poses.
+
+Next randomized-pose verification procedure:
+
+1. Run `PerceptionSnapshot` again and save to `/home/optimus/ws_aic/snapshots`.
+2. Copy the new snapshot timestamp directory into `artifacts/perception_snapshot_<timestamp>`.
+3. Run:
+
+```bash
+python3 tools/analyze_snapshots.py --input artifacts/perception_snapshot_<timestamp>
+```
+
+4. Inspect `artifacts/perception_analysis_<timestamp>/detection_contact_sheet.png`.
+5. Compare `summary.json` stability and selected centroids against the original run.
+
+Repeat-run analysis on 2026-05-04:
+
+- The user ran another `PerceptionSnapshot` collection.
+- Output was found at `/tmp/aic_perception_snapshots/20260504_000312`.
+- Copied into the repo as:
+
+```text
+artifacts/perception_snapshot_20260504_000312
+```
+
+- Analyzer command:
+
+```bash
+python3 tools/analyze_snapshots.py --input artifacts/perception_snapshot_20260504_000312
+```
+
+- Analyzer output:
+
+```text
+artifacts/perception_analysis_20260504_000312
+```
+
+Selected detections:
+
+```text
+task_1_sc_to_sc_port_1_sc_port_base:
+  selected center centroid=[283.19, 236.78], bbox=[262, 192, 305, 281]
+  same selected camera: true
+  max centroid drift: 0.191 px
+  status: stable
+
+task_1_sfp_to_nic_card_mount_0_sfp_port_0:
+  selected center centroid=[537.0, 511.52], bbox=[516, 510, 558, 513]
+  same selected camera: true
+  max centroid drift: 0.511 px
+  status: stable
+
+task_1_sfp_to_nic_card_mount_1_sfp_port_0:
+  selected center centroid=[534.95, 384.53], bbox=[514, 381, 556, 388]
+  same selected camera: true
+  max centroid drift: 1.634 px
+  status: stable
+```
+
+Interpretation:
+
+- The detector remained stable on the repeat run.
+- The selected centroids are nearly identical to the 2026-05-03 run, and the contact sheet appears visually very similar.
+- Treat this as repeat-run stability evidence, not yet as randomized-pose generalization evidence.
+- We still need a run/config that actually changes board or component positions before trusting this detector for hidden evaluation.
+
+Annotated detector contact sheet:
+
+![Offline detector contact sheet](artifacts/perception_analysis_20260503_005954/detection_contact_sheet.png)
+
+Caveats:
+
+- This is a first-pass pixel detector, not final perception.
+- It currently estimates image-space target centers only, not 3D insertion poses.
+- SFP port ordering must be tested on more board/component poses.
+- Before any robot motion, integrate this into a no-motion runtime policy to verify detections on live observations across multiple eval runs.
+
+## Manual Camera Capture After Teleoperation
+
+Implemented:
+
+```text
+tools/capture_camera_images.py
+```
+
+Purpose:
+
+- Save the current left/center/right wrist camera images while manually teleoperating.
+- Useful for capturing near-port or after-insertion views.
+- Standalone ROS script; it subscribes to official camera image and camera info topics only.
+- It does not command the robot and does not use scoring or simulator internals.
+
+Recommended workflow:
+
+1. Start the sim in manual exploration mode with task board and cable spawned, `start_aic_engine:=false`.
+2. Open RViz or `rqt_image_view` on `/center_camera/image`.
+3. Run Cartesian teleop and slowly move near/into the target port.
+4. Once the view is interesting, run:
+
+```bash
+pixi run python tools/capture_camera_images.py --label after_insertion --count 3
+```
+
+Default output:
+
+```text
+/home/optimus/ws_aic/camera_captures/<timestamp>_after_insertion/
+  00_left.ppm
+  00_center.ppm
+  00_right.ppm
+  00_metadata.json
+  ...
+```
+
+Copy useful capture folders into repo artifacts only after reviewing them, for example:
+
+```bash
+cp -a /home/optimus/ws_aic/camera_captures/<timestamp>_after_insertion \
+  artifacts/manual_camera_capture_<timestamp>_after_insertion
+```
+
+Safety note:
+
+- Use slow mode for teleoperation.
+- Do not run `aic_model` while teleop is commanding the controller.
+- Avoid pushing blindly into the board; use camera view and force readings if available.
+
+Manual SFP near-port captures on 2026-05-04:
+
+- User collected three manual camera capture folders:
+
+```text
+/home/optimus/ws_aic/camera_captures/20260504_021543_after_insertion
+/home/optimus/ws_aic/camera_captures/20260504_021932_after_insertion
+/home/optimus/ws_aic/camera_captures/20260504_022318_after_insertion
+```
+
+- Copied into repo artifacts:
+
+```text
+artifacts/manual_camera_captures/
+```
+
+- Generated contact sheet:
+
+```bash
+python3 tools/make_camera_contact_sheet.py \
+  --input artifacts/manual_camera_captures \
+  --output artifacts/manual_camera_captures/contact_sheet.png
+```
+
+![Manual near-port camera captures](artifacts/manual_camera_captures/contact_sheet.png)
+
+Observation:
+
+- When the SFP connector is near the port, the port/hole region is visible in all three wrist cameras.
+- If the connector moves too far forward beyond/into the hole, the hole is no longer visible because it is occluded by the connector/body.
+
+Implication for control:
+
+- Use vision for coarse alignment and approach while the hole remains visible.
+- Do not rely on direct hole visibility after the plug passes the entrance plane.
+- Switch near the entrance to a short guarded insertion phase using known insertion direction, small increments, and force/velocity monitoring.
+- For close-range stereo, capture detections before occlusion; after occlusion, use the last reliable visual pose plus compliance rather than trying to reacquire the hidden hole.
+
 ## Next Implementation Plan
 
 1. Keep `TaskReporter` and `PerceptionSnapshot` as diagnostic policies.
-2. Build an offline perception-analysis script/tool for saved snapshots:
-   - load `.ppm` images and metadata
-   - run initial SC and SFP heuristic detectors
-   - save annotated PNGs with detected boxes/keypoints
-   - report confidence and selected target center/orientation
-3. Review detector outputs on the current three trials.
+2. Review `artifacts/perception_analysis_20260503_005954/detection_contact_sheet.png` and per-task `detections.json` files.
+3. Collect one or more additional snapshot runs to test detector stability under randomized poses.
 4. If detector quality is acceptable, integrate the detector into a diagnostic runtime policy that logs detections but still sends no motion.
 5. Add guarded motion in stages:
    - move to a visually estimated pre-insertion pose
@@ -630,5 +885,20 @@ Implications:
 - `docker/aic_model/Dockerfile`
   - Changed default policy from `aic_example_policies.ros.CheatCode` to `aic_model.TaskReporter`.
 
+- `tools/analyze_snapshots.py`
+  - New offline first-pass SC/SFP port detector and annotation generator.
+
+- `tools/capture_camera_images.py`
+  - New manual camera capture script for near-port/after-insertion views during teleoperation.
+
+- `tools/make_camera_contact_sheet.py`
+  - New utility to build contact sheets from manual camera capture folders.
+
+- `artifacts/manual_camera_captures/`
+  - Copied manual near-port SFP camera captures and generated contact sheet.
+
 - `artifacts/perception_snapshot_20260503_005954/`
   - Copied raw snapshot data and contact-sheet PNGs into the repo for durable visual/context handoff.
+
+- `artifacts/perception_analysis_20260503_005954/`
+  - Generated annotated detector outputs and JSON reports from the copied snapshots.

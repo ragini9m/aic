@@ -1,0 +1,332 @@
+{
+  "task_dir": "task_1_sc_to_sc_port_1_sc_port_base",
+  "task": {
+    "id": "task_1",
+    "cable_type": "sfp_sc",
+    "cable_name": "cable_1",
+    "plug_type": "sc",
+    "plug_name": "sc_tip",
+    "port_type": "sc",
+    "port_name": "sc_port_base",
+    "target_module_name": "sc_port_1",
+    "time_limit": 180
+  },
+  "selected_camera": "center",
+  "selected_detection": {
+    "bbox": [
+      262,
+      192,
+      305,
+      281
+    ],
+    "area": 2561,
+    "centroid": [
+      283.19,
+      236.78
+    ],
+    "mean_rgb": [
+      52.25,
+      162.24,
+      225.39
+    ],
+    "score": 615384.21
+  },
+  "selection_reason": "selected highest-scoring component across cameras",
+  "stability": {
+    "frame_count": 3,
+    "base_frame": "00",
+    "base_camera": "center",
+    "max_centroid_drift_px": 0.191,
+    "mean_centroid_drift_px": 0.15,
+    "same_selected_camera": true,
+    "drifts": [
+      {
+        "from_frame": "00",
+        "to_frame": "01",
+        "same_camera": true,
+        "drift_px": 0.191
+      },
+      {
+        "from_frame": "00",
+        "to_frame": "02",
+        "same_camera": true,
+        "drift_px": 0.11
+      }
+    ],
+    "status": "stable"
+  },
+  "frames": [
+    {
+      "frame": "00",
+      "selected_camera": "center",
+      "selected_detection": {
+        "bbox": [
+          262,
+          192,
+          305,
+          281
+        ],
+        "area": 2561,
+        "centroid": [
+          283.19,
+          236.78
+        ],
+        "mean_rgb": [
+          52.25,
+          162.24,
+          225.39
+        ],
+        "score": 615384.21
+      },
+      "selection_reason": "selected highest-scoring component across cameras",
+      "detections": {
+        "left": [
+          {
+            "bbox": [
+              591,
+              67,
+              679,
+              122
+            ],
+            "area": 1798,
+            "centroid": [
+              634.71,
+              93.57
+            ],
+            "mean_rgb": [
+              44.08,
+              186.98,
+              245.96
+            ],
+            "score": 319559.97
+          }
+        ],
+        "center": [
+          {
+            "bbox": [
+              262,
+              192,
+              305,
+              281
+            ],
+            "area": 2561,
+            "centroid": [
+              283.19,
+              236.78
+            ],
+            "mean_rgb": [
+              52.25,
+              162.24,
+              225.39
+            ],
+            "score": 615384.21
+          }
+        ],
+        "right": [
+          {
+            "bbox": [
+              212,
+              554,
+              288,
+              624
+            ],
+            "area": 2847,
+            "centroid": [
+              250.53,
+              588.59
+            ],
+            "mean_rgb": [
+              37.31,
+              145.13,
+              213.75
+            ],
+            "score": 371864.41
+          }
+        ]
+      }
+    },
+    {
+      "frame": "01",
+      "selected_camera": "center",
+      "selected_detection": {
+        "bbox": [
+          262,
+          192,
+          305,
+          281
+        ],
+        "area": 2568,
+        "centroid": [
+          283.21,
+          236.97
+        ],
+        "mean_rgb": [
+          52.33,
+          162.24,
+          225.44
+        ],
+        "score": 617023.88
+      },
+      "selection_reason": "selected highest-scoring component across cameras",
+      "detections": {
+        "left": [
+          {
+            "bbox": [
+              591,
+              67,
+              679,
+              122
+            ],
+            "area": 1828,
+            "centroid": [
+              634.46,
+              93.7
+            ],
+            "mean_rgb": [
+              44.37,
+              186.37,
+              245.39
+            ],
+            "score": 323752.99
+          }
+        ],
+        "center": [
+          {
+            "bbox": [
+              262,
+              192,
+              305,
+              281
+            ],
+            "area": 2568,
+            "centroid": [
+              283.21,
+              236.97
+            ],
+            "mean_rgb": [
+              52.33,
+              162.24,
+              225.44
+            ],
+            "score": 617023.88
+          }
+        ],
+        "right": [
+          {
+            "bbox": [
+              212,
+              554,
+              288,
+              624
+            ],
+            "area": 2831,
+            "centroid": [
+              250.73,
+              588.7
+            ],
+            "mean_rgb": [
+              37.33,
+              145.34,
+              214.0
+            ],
+            "score": 370424.03
+          }
+        ]
+      }
+    },
+    {
+      "frame": "02",
+      "selected_camera": "center",
+      "selected_detection": {
+        "bbox": [
+          262,
+          192,
+          305,
+          281
+        ],
+        "area": 2579,
+        "centroid": [
+          283.3,
+          236.79
+        ],
+        "mean_rgb": [
+          52.37,
+          162.02,
+          225.0
+        ],
+        "score": 618475.72
+      },
+      "selection_reason": "selected highest-scoring component across cameras",
+      "detections": {
+        "left": [
+          {
+            "bbox": [
+              591,
+              67,
+              680,
+              122
+            ],
+            "area": 1822,
+            "centroid": [
+              634.69,
+              93.8
+            ],
+            "mean_rgb": [
+              44.43,
+              186.5,
+              245.39
+            ],
+            "score": 319859.76
+          }
+        ],
+        "center": [
+          {
+            "bbox": [
+              262,
+              192,
+              305,
+              281
+            ],
+            "area": 2579,
+            "centroid": [
+              283.3,
+              236.79
+            ],
+            "mean_rgb": [
+              52.37,
+              162.02,
+              225.0
+            ],
+            "score": 618475.72
+          }
+        ],
+        "right": [
+          {
+            "bbox": [
+              212,
+              554,
+              289,
+              624
+            ],
+            "area": 2853,
+            "centroid": [
+              250.67,
+              588.54
+            ],
+            "mean_rgb": [
+              37.41,
+              144.9,
+              213.5
+            ],
+            "score": 368694.91
+          }
+        ]
+      }
+    }
+  ],
+  "notes": [
+    "First-pass offline heuristic detector.",
+    "Selected detection fields at task level mirror the first saved frame.",
+    "Use annotations and stability metrics for visual review before runtime integration."
+  ]
+}

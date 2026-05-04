@@ -1,0 +1,406 @@
+{
+  "task_dir": "task_1_sfp_to_nic_card_mount_1_sfp_port_0",
+  "task": {
+    "id": "task_1",
+    "cable_type": "sfp_sc",
+    "cable_name": "cable_0",
+    "plug_type": "sfp",
+    "plug_name": "sfp_tip",
+    "port_type": "sfp",
+    "port_name": "sfp_port_0",
+    "target_module_name": "nic_card_mount_1",
+    "time_limit": 180
+  },
+  "selected_camera": "center",
+  "selected_detection": {
+    "bbox": [
+      514,
+      381,
+      556,
+      388
+    ],
+    "area": 328,
+    "centroid": [
+      534.95,
+      384.53
+    ],
+    "mean_rgb": [
+      11.8,
+      60.13,
+      43.07
+    ],
+    "score": 4153.78
+  },
+  "selection_reason": "selected from matched SFP port pair in center camera",
+  "stability": {
+    "frame_count": 3,
+    "base_frame": "00",
+    "base_camera": "center",
+    "max_centroid_drift_px": 1.634,
+    "mean_centroid_drift_px": 1.15,
+    "same_selected_camera": true,
+    "drifts": [
+      {
+        "from_frame": "00",
+        "to_frame": "01",
+        "same_camera": true,
+        "drift_px": 0.666
+      },
+      {
+        "from_frame": "00",
+        "to_frame": "02",
+        "same_camera": true,
+        "drift_px": 1.634
+      }
+    ],
+    "status": "stable"
+  },
+  "frames": [
+    {
+      "frame": "00",
+      "selected_camera": "center",
+      "selected_detection": {
+        "bbox": [
+          514,
+          381,
+          556,
+          388
+        ],
+        "area": 328,
+        "centroid": [
+          534.95,
+          384.53
+        ],
+        "mean_rgb": [
+          11.8,
+          60.13,
+          43.07
+        ],
+        "score": 4153.78
+      },
+      "selection_reason": "selected from matched SFP port pair in center camera",
+      "detections": {
+        "left": [
+          {
+            "bbox": [
+              642,
+              340,
+              646,
+              344
+            ],
+            "area": 15,
+            "centroid": [
+              644.27,
+              342.4
+            ],
+            "mean_rgb": [
+              65.0,
+              80.0,
+              42.0
+            ],
+            "score": 97.84
+          }
+        ],
+        "center": [
+          {
+            "bbox": [
+              514,
+              381,
+              556,
+              388
+            ],
+            "area": 328,
+            "centroid": [
+              534.95,
+              384.53
+            ],
+            "mean_rgb": [
+              11.8,
+              60.13,
+              43.07
+            ],
+            "score": 4153.78
+          },
+          {
+            "bbox": [
+              438,
+              381,
+              473,
+              388
+            ],
+            "area": 257,
+            "centroid": [
+              456.74,
+              384.59
+            ],
+            "mean_rgb": [
+              7.02,
+              59.3,
+              40.56
+            ],
+            "score": 3888.12
+          },
+          {
+            "bbox": [
+              563,
+              345,
+              567,
+              349
+            ],
+            "area": 25,
+            "centroid": [
+              565.0,
+              347.0
+            ],
+            "mean_rgb": [
+              42.16,
+              62.04,
+              48.04
+            ],
+            "score": 226.03
+          }
+        ],
+        "right": []
+      }
+    },
+    {
+      "frame": "01",
+      "selected_camera": "center",
+      "selected_detection": {
+        "bbox": [
+          514,
+          381,
+          556,
+          387
+        ],
+        "area": 288,
+        "centroid": [
+          535.45,
+          384.09
+        ],
+        "mean_rgb": [
+          1.59,
+          57.52,
+          38.5
+        ],
+        "score": 3582.21
+      },
+      "selection_reason": "selected from matched SFP port pair in center camera",
+      "detections": {
+        "left": [
+          {
+            "bbox": [
+              643,
+              341,
+              647,
+              345
+            ],
+            "area": 16,
+            "centroid": [
+              645.12,
+              343.06
+            ],
+            "mean_rgb": [
+              65.0,
+              80.0,
+              42.0
+            ],
+            "score": 104.23
+          }
+        ],
+        "center": [
+          {
+            "bbox": [
+              514,
+              381,
+              556,
+              387
+            ],
+            "area": 288,
+            "centroid": [
+              535.45,
+              384.09
+            ],
+            "mean_rgb": [
+              1.59,
+              57.52,
+              38.5
+            ],
+            "score": 3582.21
+          },
+          {
+            "bbox": [
+              439,
+              381,
+              474,
+              387
+            ],
+            "area": 234,
+            "centroid": [
+              457.62,
+              384.11
+            ],
+            "mean_rgb": [
+              2.26,
+              57.84,
+              38.74
+            ],
+            "score": 3176.13
+          },
+          {
+            "bbox": [
+              563,
+              345,
+              568,
+              349
+            ],
+            "area": 22,
+            "centroid": [
+              565.91,
+              346.55
+            ],
+            "mean_rgb": [
+              40.45,
+              60.68,
+              46.64
+            ],
+            "score": 226.64
+          }
+        ],
+        "right": [
+          {
+            "bbox": [
+              434,
+              466,
+              438,
+              469
+            ],
+            "area": 12,
+            "centroid": [
+              436.0,
+              467.58
+            ],
+            "mean_rgb": [
+              63.42,
+              78.17,
+              41.0
+            ],
+            "score": 153.18
+          }
+        ]
+      }
+    },
+    {
+      "frame": "02",
+      "selected_camera": "center",
+      "selected_detection": {
+        "bbox": [
+          514,
+          380,
+          557,
+          387
+        ],
+        "area": 329,
+        "centroid": [
+          536.32,
+          383.64
+        ],
+        "mean_rgb": [
+          8.86,
+          59.43,
+          42.1
+        ],
+        "score": 4219.41
+      },
+      "selection_reason": "selected from matched SFP port pair in center camera",
+      "detections": {
+        "left": [
+          {
+            "bbox": [
+              644,
+              342,
+              648,
+              345
+            ],
+            "area": 13,
+            "centroid": [
+              646.08,
+              343.62
+            ],
+            "mean_rgb": [
+              65.0,
+              80.0,
+              42.0
+            ],
+            "score": 98.21
+          }
+        ],
+        "center": [
+          {
+            "bbox": [
+              514,
+              380,
+              557,
+              387
+            ],
+            "area": 329,
+            "centroid": [
+              536.32,
+              383.64
+            ],
+            "mean_rgb": [
+              8.86,
+              59.43,
+              42.1
+            ],
+            "score": 4219.41
+          },
+          {
+            "bbox": [
+              440,
+              380,
+              475,
+              387
+            ],
+            "area": 266,
+            "centroid": [
+              458.59,
+              383.66
+            ],
+            "mean_rgb": [
+              8.04,
+              59.24,
+              41.17
+            ],
+            "score": 3936.09
+          },
+          {
+            "bbox": [
+              564,
+              344,
+              569,
+              348
+            ],
+            "area": 27,
+            "centroid": [
+              566.33,
+              346.22
+            ],
+            "mean_rgb": [
+              40.67,
+              60.93,
+              47.04
+            ],
+            "score": 277.3
+          }
+        ],
+        "right": []
+      }
+    }
+  ],
+  "notes": [
+    "First-pass offline heuristic detector.",
+    "Selected detection fields at task level mirror the first saved frame.",
+    "Use annotations and stability metrics for visual review before runtime integration."
+  ]
+}

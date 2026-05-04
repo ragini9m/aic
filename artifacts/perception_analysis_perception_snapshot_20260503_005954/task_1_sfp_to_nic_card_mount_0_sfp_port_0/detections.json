@@ -1,0 +1,807 @@
+{
+  "task_dir": "task_1_sfp_to_nic_card_mount_0_sfp_port_0",
+  "task": {
+    "id": "task_1",
+    "cable_type": "sfp_sc",
+    "cable_name": "cable_0",
+    "plug_type": "sfp",
+    "plug_name": "sfp_tip",
+    "port_type": "sfp",
+    "port_name": "sfp_port_0",
+    "target_module_name": "nic_card_mount_0",
+    "time_limit": 180
+  },
+  "selected_camera": "center",
+  "selected_detection": {
+    "bbox": [
+      517,
+      510,
+      558,
+      513
+    ],
+    "area": 162,
+    "centroid": [
+      537.37,
+      511.44
+    ],
+    "mean_rgb": [
+      13.2,
+      63.63,
+      47.33
+    ],
+    "score": 990.88
+  },
+  "selection_reason": "selected from matched SFP port pair in center camera",
+  "stability": {
+    "frame_count": 3,
+    "base_frame": "00",
+    "base_camera": "center",
+    "max_centroid_drift_px": 0.143,
+    "mean_centroid_drift_px": 0.139,
+    "same_selected_camera": true,
+    "drifts": [
+      {
+        "from_frame": "00",
+        "to_frame": "01",
+        "same_camera": true,
+        "drift_px": 0.143
+      },
+      {
+        "from_frame": "00",
+        "to_frame": "02",
+        "same_camera": true,
+        "drift_px": 0.134
+      }
+    ],
+    "status": "stable"
+  },
+  "frames": [
+    {
+      "frame": "00",
+      "selected_camera": "center",
+      "selected_detection": {
+        "bbox": [
+          517,
+          510,
+          558,
+          513
+        ],
+        "area": 162,
+        "centroid": [
+          537.37,
+          511.44
+        ],
+        "mean_rgb": [
+          13.2,
+          63.63,
+          47.33
+        ],
+        "score": 990.88
+      },
+      "selection_reason": "selected from matched SFP port pair in center camera",
+      "detections": {
+        "left": [
+          {
+            "bbox": [
+              558,
+              435,
+              570,
+              455
+            ],
+            "area": 98,
+            "centroid": [
+              564.89,
+              444.42
+            ],
+            "mean_rgb": [
+              11.67,
+              57.19,
+              40.23
+            ],
+            "score": 1296.48
+          },
+          {
+            "bbox": [
+              599,
+              504,
+              606,
+              516
+            ],
+            "area": 52,
+            "centroid": [
+              602.88,
+              509.21
+            ],
+            "mean_rgb": [
+              9.94,
+              55.58,
+              40.02
+            ],
+            "score": 658.24
+          }
+        ],
+        "center": [
+          {
+            "bbox": [
+              582,
+              441,
+              605,
+              491
+            ],
+            "area": 462,
+            "centroid": [
+              592.39,
+              474.44
+            ],
+            "mean_rgb": [
+              32.63,
+              64.51,
+              42.89
+            ],
+            "score": 9731.95
+          },
+          {
+            "bbox": [
+              564,
+              466,
+              570,
+              485
+            ],
+            "area": 120,
+            "centroid": [
+              566.55,
+              475.51
+            ],
+            "mean_rgb": [
+              13.32,
+              56.28,
+              35.49
+            ],
+            "score": 2890.35
+          },
+          {
+            "bbox": [
+              565,
+              444,
+              570,
+              463
+            ],
+            "area": 116,
+            "centroid": [
+              567.41,
+              453.43
+            ],
+            "mean_rgb": [
+              36.01,
+              63.93,
+              46.94
+            ],
+            "score": 1931.35
+          },
+          {
+            "bbox": [
+              517,
+              510,
+              558,
+              513
+            ],
+            "area": 162,
+            "centroid": [
+              537.37,
+              511.44
+            ],
+            "mean_rgb": [
+              13.2,
+              63.63,
+              47.33
+            ],
+            "score": 990.88
+          },
+          {
+            "bbox": [
+              444,
+              510,
+              478,
+              513
+            ],
+            "area": 135,
+            "centroid": [
+              460.83,
+              511.44
+            ],
+            "mean_rgb": [
+              14.1,
+              64.34,
+              48.11
+            ],
+            "score": 895.49
+          },
+          {
+            "bbox": [
+              534,
+              442,
+              537,
+              452
+            ],
+            "area": 42,
+            "centroid": [
+              535.43,
+              447.12
+            ],
+            "mean_rgb": [
+              52.55,
+              73.29,
+              59.12
+            ],
+            "score": 533.54
+          },
+          {
+            "bbox": [
+              537,
+              527,
+              545,
+              529
+            ],
+            "area": 22,
+            "centroid": [
+              541.18,
+              528.18
+            ],
+            "mean_rgb": [
+              22.68,
+              67.27,
+              52.18
+            ],
+            "score": 533.5
+          },
+          {
+            "bbox": [
+              460,
+              527,
+              468,
+              529
+            ],
+            "area": 23,
+            "centroid": [
+              463.96,
+              528.09
+            ],
+            "mean_rgb": [
+              19.48,
+              66.0,
+              50.7
+            ],
+            "score": 515.29
+          }
+        ],
+        "right": [
+          {
+            "bbox": [
+              538,
+              466,
+              543,
+              472
+            ],
+            "area": 19,
+            "centroid": [
+              540.47,
+              469.21
+            ],
+            "mean_rgb": [
+              41.53,
+              58.05,
+              42.16
+            ],
+            "score": 141.57
+          },
+          {
+            "bbox": [
+              544,
+              456,
+              547,
+              465
+            ],
+            "area": 20,
+            "centroid": [
+              545.65,
+              460.4
+            ],
+            "mean_rgb": [
+              35.3,
+              53.45,
+              34.95
+            ],
+            "score": 137.36
+          }
+        ]
+      }
+    },
+    {
+      "frame": "01",
+      "selected_camera": "center",
+      "selected_detection": {
+        "bbox": [
+          517,
+          510,
+          558,
+          513
+        ],
+        "area": 168,
+        "centroid": [
+          537.5,
+          511.5
+        ],
+        "mean_rgb": [
+          19.52,
+          63.55,
+          48.23
+        ],
+        "score": 914.05
+      },
+      "selection_reason": "selected from matched SFP port pair in center camera",
+      "detections": {
+        "left": [
+          {
+            "bbox": [
+              558,
+              435,
+              570,
+              456
+            ],
+            "area": 96,
+            "centroid": [
+              564.68,
+              444.35
+            ],
+            "mean_rgb": [
+              10.91,
+              56.73,
+              39.75
+            ],
+            "score": 1259.96
+          },
+          {
+            "bbox": [
+              598,
+              504,
+              606,
+              517
+            ],
+            "area": 52,
+            "centroid": [
+              602.79,
+              509.54
+            ],
+            "mean_rgb": [
+              9.17,
+              55.1,
+              39.44
+            ],
+            "score": 670.91
+          }
+        ],
+        "center": [
+          {
+            "bbox": [
+              582,
+              441,
+              604,
+              491
+            ],
+            "area": 456,
+            "centroid": [
+              592.34,
+              474.49
+            ],
+            "mean_rgb": [
+              31.53,
+              64.39,
+              42.48
+            ],
+            "score": 9750.92
+          },
+          {
+            "bbox": [
+              564,
+              466,
+              569,
+              485
+            ],
+            "area": 119,
+            "centroid": [
+              566.48,
+              475.58
+            ],
+            "mean_rgb": [
+              13.0,
+              56.26,
+              35.49
+            ],
+            "score": 2821.17
+          },
+          {
+            "bbox": [
+              564,
+              444,
+              570,
+              463
+            ],
+            "area": 117,
+            "centroid": [
+              567.34,
+              453.67
+            ],
+            "mean_rgb": [
+              36.8,
+              64.36,
+              47.59
+            ],
+            "score": 1961.49
+          },
+          {
+            "bbox": [
+              517,
+              510,
+              558,
+              513
+            ],
+            "area": 168,
+            "centroid": [
+              537.5,
+              511.5
+            ],
+            "mean_rgb": [
+              19.52,
+              63.55,
+              48.23
+            ],
+            "score": 914.05
+          },
+          {
+            "bbox": [
+              444,
+              510,
+              478,
+              513
+            ],
+            "area": 140,
+            "centroid": [
+              461.0,
+              511.5
+            ],
+            "mean_rgb": [
+              18.28,
+              65.07,
+              49.64
+            ],
+            "score": 869.58
+          },
+          {
+            "bbox": [
+              534,
+              442,
+              537,
+              453
+            ],
+            "area": 46,
+            "centroid": [
+              535.43,
+              447.63
+            ],
+            "mean_rgb": [
+              54.5,
+              74.67,
+              60.65
+            ],
+            "score": 565.46
+          },
+          {
+            "bbox": [
+              537,
+              527,
+              545,
+              529
+            ],
+            "area": 20,
+            "centroid": [
+              541.05,
+              528.3
+            ],
+            "mean_rgb": [
+              13.75,
+              63.75,
+              47.45
+            ],
+            "score": 538.68
+          },
+          {
+            "bbox": [
+              460,
+              527,
+              468,
+              529
+            ],
+            "area": 22,
+            "centroid": [
+              463.82,
+              528.14
+            ],
+            "mean_rgb": [
+              19.68,
+              66.91,
+              51.41
+            ],
+            "score": 499.97
+          }
+        ],
+        "right": [
+          {
+            "bbox": [
+              538,
+              456,
+              547,
+              473
+            ],
+            "area": 39,
+            "centroid": [
+              543.15,
+              465.1
+            ],
+            "mean_rgb": [
+              39.0,
+              56.36,
+              39.33
+            ],
+            "score": 267.78
+          }
+        ]
+      }
+    },
+    {
+      "frame": "02",
+      "selected_camera": "center",
+      "selected_detection": {
+        "bbox": [
+          516,
+          510,
+          558,
+          513
+        ],
+        "area": 170,
+        "centroid": [
+          537.25,
+          511.5
+        ],
+        "mean_rgb": [
+          19.15,
+          63.45,
+          48.61
+        ],
+        "score": 898.27
+      },
+      "selection_reason": "selected from matched SFP port pair in center camera",
+      "detections": {
+        "left": [
+          {
+            "bbox": [
+              558,
+              435,
+              570,
+              456
+            ],
+            "area": 98,
+            "centroid": [
+              564.35,
+              444.41
+            ],
+            "mean_rgb": [
+              11.94,
+              57.21,
+              40.36
+            ],
+            "score": 1271.93
+          },
+          {
+            "bbox": [
+              598,
+              504,
+              606,
+              517
+            ],
+            "area": 52,
+            "centroid": [
+              602.35,
+              509.31
+            ],
+            "mean_rgb": [
+              11.4,
+              56.13,
+              40.85
+            ],
+            "score": 654.34
+          }
+        ],
+        "center": [
+          {
+            "bbox": [
+              582,
+              441,
+              605,
+              492
+            ],
+            "area": 467,
+            "centroid": [
+              592.2,
+              474.55
+            ],
+            "mean_rgb": [
+              32.59,
+              64.96,
+              42.83
+            ],
+            "score": 9980.76
+          },
+          {
+            "bbox": [
+              563,
+              444,
+              570,
+              485
+            ],
+            "area": 236,
+            "centroid": [
+              566.61,
+              465.1
+            ],
+            "mean_rgb": [
+              22.92,
+              59.6,
+              40.58
+            ],
+            "score": 4662.88
+          },
+          {
+            "bbox": [
+              537,
+              527,
+              544,
+              530
+            ],
+            "area": 23,
+            "centroid": [
+              540.57,
+              528.7
+            ],
+            "mean_rgb": [
+              21.61,
+              65.65,
+              51.13
+            ],
+            "score": 1002.54
+          },
+          {
+            "bbox": [
+              516,
+              510,
+              558,
+              513
+            ],
+            "area": 170,
+            "centroid": [
+              537.25,
+              511.5
+            ],
+            "mean_rgb": [
+              19.15,
+              63.45,
+              48.61
+            ],
+            "score": 898.27
+          },
+          {
+            "bbox": [
+              443,
+              510,
+              478,
+              513
+            ],
+            "area": 139,
+            "centroid": [
+              460.17,
+              511.49
+            ],
+            "mean_rgb": [
+              21.67,
+              64.49,
+              49.65
+            ],
+            "score": 774.6
+          },
+          {
+            "bbox": [
+              460,
+              527,
+              467,
+              529
+            ],
+            "area": 18,
+            "centroid": [
+              463.5,
+              528.33
+            ],
+            "mean_rgb": [
+              9.94,
+              63.33,
+              46.33
+            ],
+            "score": 540.73
+          },
+          {
+            "bbox": [
+              534,
+              442,
+              537,
+              453
+            ],
+            "area": 39,
+            "centroid": [
+              535.28,
+              448.03
+            ],
+            "mean_rgb": [
+              54.38,
+              75.1,
+              60.1
+            ],
+            "score": 500.64
+          },
+          {
+            "bbox": [
+              492,
+              443,
+              494,
+              451
+            ],
+            "area": 17,
+            "centroid": [
+              492.65,
+              445.88
+            ],
+            "mean_rgb": [
+              35.47,
+              61.12,
+              44.12
+            ],
+            "score": 244.88
+          }
+        ],
+        "right": [
+          {
+            "bbox": [
+              538,
+              455,
+              548,
+              473
+            ],
+            "area": 41,
+            "centroid": [
+              543.61,
+              464.71
+            ],
+            "mean_rgb": [
+              38.32,
+              55.9,
+              38.9
+            ],
+            "score": 286.32
+          }
+        ]
+      }
+    }
+  ],
+  "notes": [
+    "First-pass offline heuristic detector.",
+    "Selected detection fields at task level mirror the first saved frame.",
+    "Use annotations and stability metrics for visual review before runtime integration."
+  ]
+}
