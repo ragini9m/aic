@@ -1,0 +1,115 @@
+{
+  "capture_dir": "/home/optimus/ws_aic/ground_truth_debug/20260504_033322_pnp_gt_debug",
+  "frame": "00",
+  "camera": "right",
+  "keypoint_source": "ground_truth_projection",
+  "success": true,
+  "used_keypoints": [
+    "sfp_port_0_link",
+    "sfp_port_0_link_entrance",
+    "sfp_port_1_link",
+    "sfp_port_1_link_entrance"
+  ],
+  "object_points_port0_frame_m": {
+    "sfp_port_0_link": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "sfp_port_0_link_entrance": [
+      0.0,
+      0.0,
+      -0.0458
+    ],
+    "sfp_port_1_link": [
+      -0.0232,
+      0.0,
+      0.0
+    ],
+    "sfp_port_1_link_entrance": [
+      -0.0232,
+      0.0,
+      -0.0458
+    ]
+  },
+  "image_keypoints_px": {
+    "sfp_port_0_link": [
+      463.58,
+      625.17
+    ],
+    "sfp_port_0_link_entrance": [
+      448.52,
+      677.23
+    ],
+    "sfp_port_1_link": [
+      430.84,
+      680.77
+    ],
+    "sfp_port_1_link_entrance": [
+      412.13,
+      738.65
+    ]
+  },
+  "reprojection_errors": {
+    "sfp_port_0_link": {
+      "measured_uv": [
+        463.58,
+        625.17
+      ],
+      "projected_uv": [
+        463.58,
+        625.17
+      ],
+      "error_px": 0.002
+    },
+    "sfp_port_0_link_entrance": {
+      "measured_uv": [
+        448.52,
+        677.23
+      ],
+      "projected_uv": [
+        448.52,
+        677.23
+      ],
+      "error_px": 0.001
+    },
+    "sfp_port_1_link": {
+      "measured_uv": [
+        430.84,
+        680.77
+      ],
+      "projected_uv": [
+        430.84,
+        680.77
+      ],
+      "error_px": 0.002
+    },
+    "sfp_port_1_link_entrance": {
+      "measured_uv": [
+        412.13,
+        738.65
+      ],
+      "projected_uv": [
+        412.13,
+        738.65
+      ],
+      "error_px": 0.001
+    }
+  },
+  "comparison_to_ground_truth_pose": {
+    "translation_error_m": 4e-06,
+    "translation_error_mm": 0.004,
+    "rotation_error_deg": 0.0,
+    "pnp_translation_camera_m": [
+      -0.037788,
+      0.038041,
+      0.415674
+    ],
+    "gt_translation_camera_m": [
+      -0.037788,
+      0.03804,
+      0.415678
+    ]
+  },
+  "overlay": "artifacts/pnp_sfp_debug_20260504_033322_pnp_gt_debug/00_right_pnp_overlay.png"
+}

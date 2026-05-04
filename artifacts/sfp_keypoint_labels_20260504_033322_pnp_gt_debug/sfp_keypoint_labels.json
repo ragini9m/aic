@@ -1,0 +1,124 @@
+{
+  "samples": [
+    {
+      "sample_id": "20260504_033322_pnp_gt_debug_00_left",
+      "capture_dir": "/home/optimus/ws_aic/ground_truth_debug/20260504_033322_pnp_gt_debug",
+      "frame": "00",
+      "camera": "left",
+      "image_path": "artifacts/sfp_keypoint_labels_20260504_033322_pnp_gt_debug/images/20260504_033322_pnp_gt_debug_00_left.ppm",
+      "image_width": 1152,
+      "image_height": 1024,
+      "complete": true,
+      "keypoints": {
+        "sfp_port_0_link": {
+          "u": 558.57,
+          "v": 404.26,
+          "visible": true,
+          "z_camera_m": 0.3962,
+          "target_frame": "task_board/nic_card_mount_0/sfp_port_0_link"
+        },
+        "sfp_port_0_link_entrance": {
+          "u": 558.11,
+          "v": 431.37,
+          "visible": true,
+          "z_camera_m": 0.3519,
+          "target_frame": "task_board/nic_card_mount_0/sfp_port_0_link_entrance"
+        },
+        "sfp_port_1_link": {
+          "u": 521.7,
+          "v": 341.43,
+          "visible": true,
+          "z_camera_m": 0.391,
+          "target_frame": "task_board/nic_card_mount_0/sfp_port_1_link"
+        },
+        "sfp_port_1_link_entrance": {
+          "u": 516.52,
+          "v": 360.91,
+          "visible": true,
+          "z_camera_m": 0.3467,
+          "target_frame": "task_board/nic_card_mount_0/sfp_port_1_link_entrance"
+        }
+      }
+    },
+    {
+      "sample_id": "20260504_033322_pnp_gt_debug_00_center",
+      "capture_dir": "/home/optimus/ws_aic/ground_truth_debug/20260504_033322_pnp_gt_debug",
+      "frame": "00",
+      "camera": "center",
+      "image_path": "artifacts/sfp_keypoint_labels_20260504_033322_pnp_gt_debug/images/20260504_033322_pnp_gt_debug_00_center.ppm",
+      "image_width": 1152,
+      "image_height": 1024,
+      "complete": true,
+      "keypoints": {
+        "sfp_port_0_link": {
+          "u": 443.09,
+          "v": 489.91,
+          "visible": true,
+          "z_camera_m": 0.4036,
+          "target_frame": "task_board/nic_card_mount_0/sfp_port_0_link"
+        },
+        "sfp_port_0_link_entrance": {
+          "u": 426.66,
+          "v": 526.1,
+          "visible": true,
+          "z_camera_m": 0.3592,
+          "target_frame": "task_board/nic_card_mount_0/sfp_port_0_link_entrance"
+        },
+        "sfp_port_1_link": {
+          "u": 372.0,
+          "v": 489.86,
+          "visible": true,
+          "z_camera_m": 0.4036,
+          "target_frame": "task_board/nic_card_mount_0/sfp_port_1_link"
+        },
+        "sfp_port_1_link_entrance": {
+          "u": 346.78,
+          "v": 526.04,
+          "visible": true,
+          "z_camera_m": 0.3592,
+          "target_frame": "task_board/nic_card_mount_0/sfp_port_1_link_entrance"
+        }
+      }
+    },
+    {
+      "sample_id": "20260504_033322_pnp_gt_debug_00_right",
+      "capture_dir": "/home/optimus/ws_aic/ground_truth_debug/20260504_033322_pnp_gt_debug",
+      "frame": "00",
+      "camera": "right",
+      "image_path": "artifacts/sfp_keypoint_labels_20260504_033322_pnp_gt_debug/images/20260504_033322_pnp_gt_debug_00_right.ppm",
+      "image_width": 1152,
+      "image_height": 1024,
+      "complete": true,
+      "keypoints": {
+        "sfp_port_0_link": {
+          "u": 463.58,
+          "v": 625.17,
+          "visible": true,
+          "z_camera_m": 0.4157,
+          "target_frame": "task_board/nic_card_mount_0/sfp_port_0_link"
+        },
+        "sfp_port_0_link_entrance": {
+          "u": 448.52,
+          "v": 677.23,
+          "visible": true,
+          "z_camera_m": 0.3714,
+          "target_frame": "task_board/nic_card_mount_0/sfp_port_0_link_entrance"
+        },
+        "sfp_port_1_link": {
+          "u": 430.84,
+          "v": 680.77,
+          "visible": true,
+          "z_camera_m": 0.4209,
+          "target_frame": "task_board/nic_card_mount_0/sfp_port_1_link"
+        },
+        "sfp_port_1_link_entrance": {
+          "u": 412.13,
+          "v": 738.65,
+          "visible": true,
+          "z_camera_m": 0.3766,
+          "target_frame": "task_board/nic_card_mount_0/sfp_port_1_link_entrance"
+        }
+      }
+    }
+  ]
+}

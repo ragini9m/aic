@@ -1,0 +1,99 @@
+{
+  "frames": [
+    {
+      "frame": "00",
+      "projections": {
+        "left": [
+          {
+            "target_frame": "task_board/nic_card_mount_0/sfp_port_0_link",
+            "visible": true,
+            "u": 558.57,
+            "v": 404.26,
+            "z_camera_m": 0.3962
+          },
+          {
+            "target_frame": "task_board/nic_card_mount_0/sfp_port_0_link_entrance",
+            "visible": true,
+            "u": 558.11,
+            "v": 431.37,
+            "z_camera_m": 0.3519
+          },
+          {
+            "target_frame": "task_board/nic_card_mount_0/sfp_port_1_link",
+            "visible": true,
+            "u": 521.7,
+            "v": 341.43,
+            "z_camera_m": 0.391
+          },
+          {
+            "target_frame": "task_board/nic_card_mount_0/sfp_port_1_link_entrance",
+            "visible": true,
+            "u": 516.52,
+            "v": 360.91,
+            "z_camera_m": 0.3467
+          }
+        ],
+        "center": [
+          {
+            "target_frame": "task_board/nic_card_mount_0/sfp_port_0_link",
+            "visible": true,
+            "u": 443.09,
+            "v": 489.91,
+            "z_camera_m": 0.4036
+          },
+          {
+            "target_frame": "task_board/nic_card_mount_0/sfp_port_0_link_entrance",
+            "visible": true,
+            "u": 426.66,
+            "v": 526.1,
+            "z_camera_m": 0.3592
+          },
+          {
+            "target_frame": "task_board/nic_card_mount_0/sfp_port_1_link",
+            "visible": true,
+            "u": 372.0,
+            "v": 489.86,
+            "z_camera_m": 0.4036
+          },
+          {
+            "target_frame": "task_board/nic_card_mount_0/sfp_port_1_link_entrance",
+            "visible": true,
+            "u": 346.78,
+            "v": 526.04,
+            "z_camera_m": 0.3592
+          }
+        ],
+        "right": [
+          {
+            "target_frame": "task_board/nic_card_mount_0/sfp_port_0_link",
+            "visible": true,
+            "u": 463.58,
+            "v": 625.17,
+            "z_camera_m": 0.4157
+          },
+          {
+            "target_frame": "task_board/nic_card_mount_0/sfp_port_0_link_entrance",
+            "visible": true,
+            "u": 448.52,
+            "v": 677.23,
+            "z_camera_m": 0.3714
+          },
+          {
+            "target_frame": "task_board/nic_card_mount_0/sfp_port_1_link",
+            "visible": true,
+            "u": 430.84,
+            "v": 680.77,
+            "z_camera_m": 0.4209
+          },
+          {
+            "target_frame": "task_board/nic_card_mount_0/sfp_port_1_link_entrance",
+            "visible": true,
+            "u": 412.13,
+            "v": 738.65,
+            "z_camera_m": 0.3766
+          }
+        ]
+      }
+    }
+  ]
+}

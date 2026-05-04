@@ -1,0 +1,57 @@
+{
+  "frames": [
+    {
+      "frame": "00",
+      "projections": {
+        "left": [
+          {
+            "target_frame": "task_board/nic_card_mount_0/sfp_port_0_link",
+            "visible": true,
+            "u": 558.17,
+            "v": 403.86,
+            "z_camera_m": 0.3964
+          },
+          {
+            "target_frame": "task_board/nic_card_mount_0/sfp_port_0_link_entrance",
+            "visible": true,
+            "u": 557.65,
+            "v": 430.91,
+            "z_camera_m": 0.3521
+          }
+        ],
+        "center": [
+          {
+            "target_frame": "task_board/nic_card_mount_0/sfp_port_0_link",
+            "visible": true,
+            "u": 442.68,
+            "v": 489.98,
+            "z_camera_m": 0.4037
+          },
+          {
+            "target_frame": "task_board/nic_card_mount_0/sfp_port_0_link_entrance",
+            "visible": true,
+            "u": 426.21,
+            "v": 526.16,
+            "z_camera_m": 0.3593
+          }
+        ],
+        "right": [
+          {
+            "target_frame": "task_board/nic_card_mount_0/sfp_port_0_link",
+            "visible": true,
+            "u": 463.56,
+            "v": 625.46,
+            "z_camera_m": 0.4159
+          },
+          {
+            "target_frame": "task_board/nic_card_mount_0/sfp_port_0_link_entrance",
+            "visible": true,
+            "u": 448.51,
+            "v": 677.53,
+            "z_camera_m": 0.3716
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -859,6 +859,503 @@ Implication for control:
 - Switch near the entrance to a short guarded insertion phase using known insertion direction, small increments, and force/velocity monitoring.
 - For close-range stereo, capture detections before occlusion; after occlusion, use the last reliable visual pose plus compliance rather than trying to reacquire the hidden hole.
 
+## Ground Truth Debug Verification
+
+Implemented:
+
+```text
+tools/capture_ground_truth_debug.py
+tools/project_ground_truth_debug.py
+```
+
+Purpose:
+
+- Debug-only capture of legal camera images plus ground-truth target TF frames.
+- Use only with `ground_truth:=true` to validate perception/triangulation accuracy offline.
+- Do not use this script, `/scoring/tf`, or any ground-truth target frames in the submitted/evaluation policy.
+
+Relevant frame convention from `CheatCode`:
+
+```text
+task_board/<target_module_name>/<port_name>_link
+```
+
+Model files also define entrance frames:
+
+```text
+task_board/<target_module_name>/<port_name>_link_entrance
+```
+
+Examples:
+
+```text
+task_board/nic_card_mount_0/sfp_port_0_link
+task_board/nic_card_mount_0/sfp_port_0_link_entrance
+task_board/sc_port_1/sc_port_base_link
+task_board/sc_port_1/sc_port_base_link_entrance
+```
+
+Verification workflow:
+
+1. Start a debug scene with `ground_truth:=true`.
+2. Optionally teleop near the port while keeping the target visible.
+3. Run:
+
+```bash
+pixi run python tools/capture_ground_truth_debug.py --label stereo_gt_debug --count 1
+```
+
+Default output:
+
+```text
+/home/optimus/ws_aic/ground_truth_debug/<timestamp>_stereo_gt_debug/
+  00_left.ppm
+  00_center.ppm
+  00_right.ppm
+  00_metadata.json
+```
+
+The metadata includes:
+
+```text
+ground_truth_transforms_base_link
+camera_transforms_base_link
+```
+
+Next comparison step:
+
+- Project ground-truth port/entrance points into the camera images.
+- Compare them to detector centroids.
+- Later, compare stereo-triangulated 3D points against the same ground-truth frames.
+
+Projection command:
+
+```bash
+pixi run python tools/project_ground_truth_debug.py \
+  /home/optimus/ws_aic/ground_truth_debug/<timestamp>_stereo_gt_debug
+```
+
+Projection output:
+
+```text
+/home/optimus/ws_aic/ground_truth_debug/<timestamp>_stereo_gt_debug/gt_projection/
+  00_left_gt_projection.png
+  00_center_gt_projection.png
+  00_right_gt_projection.png
+  gt_projection_contact_sheet.png
+  projection_summary.json
+```
+
+2026-05-04 first debug capture:
+
+- Capture path: `/home/optimus/ws_aic/ground_truth_debug/20260504_025418_stereo_gt_debug`
+- It found the SFP target frames for `nic_card_mount_0/sfp_port_0`:
+
+```text
+task_board/nic_card_mount_0/sfp_port_0_link
+task_board/nic_card_mount_0/sfp_port_0_link_entrance
+```
+
+- It missed `nic_card_mount_1` and `sc_port_1` frames because those entities were not spawned in the current manual debug scene.
+- This capture was made before camera optical TF capture was added, so rerun `capture_ground_truth_debug.py` before using `project_ground_truth_debug.py`.
+
+2026-05-04 second debug capture:
+
+- Capture path: `/home/optimus/ws_aic/ground_truth_debug/20260504_025752_stereo_gt_debug`
+- Capture result:
+
+```text
+target_tf_found=2
+target_tf_missing=4
+camera_tf_found=3
+camera_tf_missing=0
+```
+
+- Found SFP frames:
+
+```text
+task_board/nic_card_mount_0/sfp_port_0_link
+task_board/nic_card_mount_0/sfp_port_0_link_entrance
+```
+
+- Projection output was written inside the repo because the capture directory is outside the writable workspace:
+
+```text
+artifacts/ground_truth_debug_20260504_025752_stereo_gt_debug/gt_projection
+```
+
+- Projection summary:
+
+```text
+center camera:
+  sfp_port_0_link:          u=442.68, v=489.98, z=0.4037 m
+  sfp_port_0_link_entrance: u=426.21, v=526.16, z=0.3593 m
+
+left camera:
+  sfp_port_0_link:          u=558.17, v=403.86, z=0.3964 m
+  sfp_port_0_link_entrance: u=557.65, v=430.91, z=0.3521 m
+
+right camera:
+  sfp_port_0_link:          u=463.56, v=625.46, z=0.4159 m
+  sfp_port_0_link_entrance: u=448.51, v=677.53, z=0.3716 m
+```
+
+![Ground truth projection contact sheet](artifacts/ground_truth_debug_20260504_025752_stereo_gt_debug/gt_projection/gt_projection_contact_sheet.png)
+
+Interpretation:
+
+- Ground-truth SFP port and entrance frames project into the visible port region in all three cameras.
+- This confirms the camera transforms and projection math are usable for debug verification.
+- The entrance frame projects below/forward of the port frame in the images, which matches the physical insertion direction.
+- Next debug step is to run our detector on the same capture and measure pixel error between detected port/hole features and the projected ground-truth port/entrance frames.
+
+Detector vs ground-truth comparison implemented:
+
+```text
+tools/compare_detector_ground_truth.py
+```
+
+Command run:
+
+```bash
+pixi run python tools/compare_detector_ground_truth.py \
+  /home/optimus/ws_aic/ground_truth_debug/20260504_025752_stereo_gt_debug \
+  --output artifacts/ground_truth_debug_20260504_025752_stereo_gt_debug
+```
+
+Output:
+
+```text
+artifacts/ground_truth_debug_20260504_025752_stereo_gt_debug/
+  detector_gt_compare_contact_sheet.png
+  detector_gt_compare_summary.json
+```
+
+Pixel error between selected detector point and projected ground-truth frames:
+
+```text
+left camera selected detector centroid=[549.31, 421.26]
+  error to sfp_port_0_link:          19.52 px
+  error to sfp_port_0_link_entrance: 12.76 px
+
+center camera selected detector centroid=[432.88, 512.47]
+  error to sfp_port_0_link:          24.53 px
+  error to sfp_port_0_link_entrance: 15.23 px
+
+right camera selected detector centroid=[503.10, 539.07]
+  error to sfp_port_0_link:          95.01 px
+  error to sfp_port_0_link_entrance: 148.84 px
+```
+
+Triangulation error from selected detector rays:
+
+```text
+all three cameras:
+  error to sfp_port_0_link:          42.97 mm
+  error to sfp_port_0_link_entrance: 87.94 mm
+
+left + center only:
+  error to sfp_port_0_link:          22.84 mm
+  error to sfp_port_0_link_entrance: 23.22 mm
+
+left + right:
+  error to sfp_port_0_link:          68.31 mm
+  error to sfp_port_0_link_entrance: 113.38 mm
+
+center + right:
+  error to sfp_port_0_link:          71.88 mm
+  error to sfp_port_0_link_entrance: 117.17 mm
+```
+
+Interpretation:
+
+- The simple detector identifies the visible SFP port region in center/left, but is not accurate enough for final stereo triangulation yet.
+- The right-camera selected point is a wrong feature for this debug capture and corrupts 3-camera triangulation.
+- Pairwise results prove we need confidence checks/rejection before using stereo rays.
+- Current detector is biased closer to the entrance projection than the deeper `sfp_port_0_link` projection in left/center pixel space, but the resulting 3D point is still about 23 mm off.
+- Next perception work should improve correspondence/keypoint selection, especially in side cameras, before using stereo output for motion.
+
+SFP PnP/model-fitting prototype:
+
+- Implemented:
+
+```text
+tools/pnp_sfp_debug.py
+```
+
+- Goal:
+  - Solve a 6D pose for `sfp_port_0_link` from known SFP model keypoints.
+  - Object frame is `sfp_port_0_link`.
+  - Prototype keypoints:
+
+```text
+sfp_port_0_link
+sfp_port_0_link_entrance
+sfp_port_1_link
+sfp_port_1_link_entrance
+```
+
+- Known model dimensions used:
+
+```text
+SFP port spacing: 23.2 mm
+SFP entrance offset: 45.8 mm
+```
+
+- The existing debug capture `/home/optimus/ws_aic/ground_truth_debug/20260504_025752_stereo_gt_debug` only contains `sfp_port_0` frames, so PnP correctly refuses to solve with only 2 keypoints.
+- Updated `tools/capture_ground_truth_debug.py` defaults to also capture `sfp_port_1` frames for each NIC mount.
+- To run the PnP math sanity check, start a `ground_truth:=true` debug scene and capture again:
+
+```bash
+pixi run python tools/capture_ground_truth_debug.py --label pnp_gt_debug --count 1
+pixi run python tools/project_ground_truth_debug.py /home/optimus/ws_aic/ground_truth_debug/<timestamp>_pnp_gt_debug \
+  --output artifacts/ground_truth_debug_<timestamp>_pnp_gt_debug/gt_projection
+pixi run python tools/pnp_sfp_debug.py /home/optimus/ws_aic/ground_truth_debug/<timestamp>_pnp_gt_debug \
+  --camera center \
+  --output artifacts/pnp_sfp_debug_<timestamp>_pnp_gt_debug
+```
+
+- If the PnP sanity check succeeds using ground-truth-projected keypoints, the next step is replacing those projected keypoints with detected SFP/NIC keypoints.
+
+PnP sanity check completed on 2026-05-04:
+
+- User captured:
+
+```text
+/home/optimus/ws_aic/ground_truth_debug/20260504_033322_pnp_gt_debug
+```
+
+- Capture result:
+
+```text
+target_tf_found=4
+target_tf_missing=6
+camera_tf_found=3
+camera_tf_missing=0
+```
+
+- Projection output:
+
+```text
+artifacts/ground_truth_debug_20260504_033322_pnp_gt_debug/gt_projection
+```
+
+- PnP output:
+
+```text
+artifacts/pnp_sfp_debug_20260504_033322_pnp_gt_debug
+```
+
+- PnP was run using ground-truth-projected keypoints for all three cameras.
+- This validates the PnP/model geometry math, not automatic keypoint detection yet.
+
+Pose error against ground-truth `sfp_port_0_link` pose:
+
+```text
+center camera:
+  translation error: 0.008 mm
+  rotation error: 0.0 deg
+
+left camera:
+  translation error: 0.003 mm
+  rotation error: 0.0 deg
+
+right camera:
+  translation error: 0.004 mm
+  rotation error: 0.0 deg
+```
+
+![SFP PnP overlay contact sheet](artifacts/pnp_sfp_debug_20260504_033322_pnp_gt_debug/pnp_overlay_contact_sheet.png)
+
+Interpretation:
+
+- With correct 2D keypoints, PnP recovers the SFP port 6D pose essentially exactly.
+- This confirms that `detect SFP/NIC keypoints -> PnP/model fitting -> 6D pose` is technically viable.
+- The hard remaining problem is reliable image keypoint detection for:
+  - `sfp_port_0_link`
+  - `sfp_port_0_link_entrance`
+  - `sfp_port_1_link`
+  - `sfp_port_1_link_entrance`
+- Next step should focus on keypoint detection/labeling, not PnP math.
+
+SFP keypoint label export implemented:
+
+```text
+tools/export_sfp_keypoint_labels.py
+```
+
+Command run:
+
+```bash
+pixi run python tools/export_sfp_keypoint_labels.py \
+  /home/optimus/ws_aic/ground_truth_debug/20260504_033322_pnp_gt_debug \
+  --copy-images
+```
+
+Output:
+
+```text
+artifacts/sfp_keypoint_labels_20260504_033322_pnp_gt_debug
+```
+
+Files:
+
+```text
+sfp_keypoint_labels.json
+sfp_keypoint_labels.jsonl
+sfp_keypoint_label_contact_sheet.png
+annotated/*.png
+images/*.ppm
+```
+
+Exported complete samples:
+
+```text
+samples=3
+complete=3
+```
+
+Center-camera keypoints:
+
+```text
+sfp_port_0_link:          u=443.09, v=489.91, z=0.4036 m
+sfp_port_0_link_entrance: u=426.66, v=526.10, z=0.3592 m
+sfp_port_1_link:          u=372.00, v=489.86, z=0.4036 m
+sfp_port_1_link_entrance: u=346.78, v=526.04, z=0.3592 m
+```
+
+![SFP keypoint label contact sheet](artifacts/sfp_keypoint_labels_20260504_033322_pnp_gt_debug/sfp_keypoint_label_contact_sheet.png)
+
+Interpretation:
+
+- We now have a clean label format for the four SFP PnP keypoints.
+- This can support:
+  - learned keypoint/heatmap training
+  - template/keypoint detector evaluation
+  - manual inspection of projected labels
+- Need many more captures with varied board pose, NIC mount, camera distance, and near-port views before training or validating a robust detector.
+
+## SFP Data Collection Prep
+
+Goal:
+
+- Build a varied labeled SFP keypoint dataset for `detect SFP/NIC keypoints -> PnP/model fitting -> 6D pose`.
+- Use ground-truth only for offline label generation and verification.
+- Keep the eventual runtime policy compliant by using only live camera observations and task fields.
+
+New helper:
+
+```text
+tools/process_sfp_data_capture.py
+```
+
+Purpose:
+
+- Takes one or more folders from `tools/capture_ground_truth_debug.py`.
+- Runs ground-truth projection.
+- Exports SFP keypoint labels.
+- Runs PnP sanity checks for left/center/right cameras.
+- Writes a batch summary to:
+
+```text
+artifacts/sfp_data_collection/latest_process_summary.json
+```
+
+One-capture processing command:
+
+```bash
+cd /home/optimus/ws_aic/src/aic
+pixi run python tools/process_sfp_data_capture.py \
+  /home/optimus/ws_aic/ground_truth_debug/<timestamp>_pnp_gt_debug \
+  --copy-images
+```
+
+Multi-capture processing command:
+
+```bash
+cd /home/optimus/ws_aic/src/aic
+pixi run python tools/process_sfp_data_capture.py \
+  /home/optimus/ws_aic/ground_truth_debug/<capture_1> \
+  /home/optimus/ws_aic/ground_truth_debug/<capture_2> \
+  /home/optimus/ws_aic/ground_truth_debug/<capture_3> \
+  --copy-images
+```
+
+Expected outputs per capture:
+
+```text
+artifacts/ground_truth_debug_<capture>/gt_projection/
+  gt_projection_contact_sheet.png
+  projection_summary.json
+
+artifacts/sfp_keypoint_labels_<capture>/
+  sfp_keypoint_labels.json
+  sfp_keypoint_labels.jsonl
+  sfp_keypoint_label_contact_sheet.png
+  annotated/*.png
+  images/*.ppm        # only when --copy-images is used
+
+artifacts/pnp_sfp_debug_<capture>/
+  *_pnp_summary.json
+  *_pnp_overlay.png
+  pnp_overlay_contact_sheet.png
+```
+
+Recommended collection loop:
+
+1. Start one debug scene with `ground_truth:=true`, `start_aic_engine:=false`, GUI/RViz enabled, and SFP cable attached.
+2. Vary scene pose using documented launch arguments from `aic_bringup/README.md` and `aic_bringup/launch/spawn_task_board.launch.py`:
+   - `task_board_x`
+   - `task_board_y`
+   - `task_board_z`
+   - `task_board_yaw`
+   - `nic_card_mount_0_translation`
+   - `nic_card_mount_0_roll`
+   - `nic_card_mount_0_pitch`
+   - `nic_card_mount_0_yaw`
+3. Use teleop to capture different camera viewpoints:
+   - far enough that the two SFP ports are fully visible
+   - medium approach distance
+   - just before the plug occludes the holes
+   - slight left/right/up/down viewpoints
+4. For each useful pose, run:
+
+```bash
+pixi run python tools/capture_ground_truth_debug.py --label pnp_gt_debug --count 1
+```
+
+5. Process the capture:
+
+```bash
+pixi run python tools/process_sfp_data_capture.py \
+  /home/optimus/ws_aic/ground_truth_debug/<timestamp>_pnp_gt_debug \
+  --copy-images
+```
+
+6. Inspect:
+   - `artifacts/sfp_keypoint_labels_<capture>/sfp_keypoint_label_contact_sheet.png`
+   - `artifacts/pnp_sfp_debug_<capture>/pnp_overlay_contact_sheet.png`
+   - `artifacts/sfp_data_collection/latest_process_summary.json`
+
+Good-data criteria:
+
+- All four SFP keypoints are visible for at least the center camera.
+- Prefer captures where all three cameras are complete, but keep center-only useful views separately if side-camera occlusion happens.
+- GT markers should sit on the intended physical SFP port/entrance features, not on an unrelated green board marking.
+- PnP summary should show near-zero error when using ground-truth-projected labels. If it fails, the capture likely lacks all four visible SFP keypoints or the current debug scene spawned a different NIC mount than the hardcoded `pnp_sfp_debug.py` comparison frame.
+
+Initial target dataset size:
+
+- Smoke test: 10 captures, about 30 labeled images.
+- First detector attempt: 50 to 100 captures, about 150 to 300 labeled images.
+- Include negative/edge cases later: partial occlusion, side-camera miss, close approach after hole begins disappearing.
+
+Compliance note:
+
+- `capture_ground_truth_debug.py`, `project_ground_truth_debug.py`, `export_sfp_keypoint_labels.py`, and `process_sfp_data_capture.py` are debug/training tools only.
+- Do not import or call them from the final policy.
+- Do not depend on `/scoring/tf` or target TF frames during evaluation.
+
 ## Next Implementation Plan
 
 1. Keep `TaskReporter` and `PerceptionSnapshot` as diagnostic policies.
@@ -893,6 +1390,24 @@ Implication for control:
 
 - `tools/make_camera_contact_sheet.py`
   - New utility to build contact sheets from manual camera capture folders.
+
+- `tools/capture_ground_truth_debug.py`
+  - New debug-only camera plus ground-truth TF capture script for perception verification.
+
+- `tools/project_ground_truth_debug.py`
+  - New debug-only projection script to overlay ground-truth target frames onto captured camera images.
+
+- `tools/compare_detector_ground_truth.py`
+  - New debug-only comparison script for detector-vs-ground-truth pixel error and triangulation error.
+
+- `tools/pnp_sfp_debug.py`
+  - New debug-only SFP PnP/model-fitting prototype.
+
+- `tools/export_sfp_keypoint_labels.py`
+  - New debug-only exporter for SFP PnP keypoint labels from ground-truth projections.
+
+- `tools/process_sfp_data_capture.py`
+  - New debug-only batch processor for projection, SFP label export, PnP sanity checks, and data-collection summaries.
 
 - `artifacts/manual_camera_captures/`
   - Copied manual near-port SFP camera captures and generated contact sheet.

@@ -1,0 +1,48 @@
+{
+  "created_at": "2026-05-04T04:11:25.315707",
+  "warning": "Debug/training artifact summary. Do not use ground-truth labels in evaluation.",
+  "results": [
+    {
+      "capture_dir": "/home/optimus/ws_aic/ground_truth_debug/20260504_033322_pnp_gt_debug",
+      "projection_dir": "/home/optimus/ws_aic/src/aic/artifacts/ground_truth_debug_20260504_033322_pnp_gt_debug/gt_projection",
+      "labels_dir": "/home/optimus/ws_aic/src/aic/artifacts/sfp_keypoint_labels_20260504_033322_pnp_gt_debug",
+      "pnp_dir": "/home/optimus/ws_aic/src/aic/artifacts/pnp_sfp_debug_20260504_033322_pnp_gt_debug",
+      "steps": [
+        {
+          "name": "project_ground_truth",
+          "status": "skipped"
+        },
+        {
+          "name": "export_sfp_keypoint_labels",
+          "status": "skipped"
+        }
+      ],
+      "pnp": [
+        {
+          "frame": "00",
+          "camera": "left",
+          "status": "skipped",
+          "summary": "/home/optimus/ws_aic/src/aic/artifacts/pnp_sfp_debug_20260504_033322_pnp_gt_debug/00_left_pnp_summary.json"
+        },
+        {
+          "frame": "00",
+          "camera": "center",
+          "status": "skipped",
+          "summary": "/home/optimus/ws_aic/src/aic/artifacts/pnp_sfp_debug_20260504_033322_pnp_gt_debug/00_center_pnp_summary.json"
+        },
+        {
+          "frame": "00",
+          "camera": "right",
+          "status": "skipped",
+          "summary": "/home/optimus/ws_aic/src/aic/artifacts/pnp_sfp_debug_20260504_033322_pnp_gt_debug/00_right_pnp_summary.json"
+        }
+      ],
+      "label_counts": {
+        "samples": 3,
+        "complete": 3
+      },
+      "pnp_contact_sheet": "/home/optimus/ws_aic/src/aic/artifacts/pnp_sfp_debug_20260504_033322_pnp_gt_debug/pnp_overlay_contact_sheet.png",
+      "status": "ok"
+    }
+  ]
+}

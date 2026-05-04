@@ -1,0 +1,182 @@
+{
+  "capture_dir": "/home/optimus/ws_aic/ground_truth_debug/20260504_025752_stereo_gt_debug",
+  "port_type": "sfp",
+  "port_name": "sfp_port_0",
+  "frames": [
+    {
+      "frame": "00",
+      "camera_results": {
+        "left": {
+          "selected_detection": {
+            "bbox": [
+              542,
+              410,
+              556,
+              433
+            ],
+            "area": 113,
+            "centroid": [
+              549.31,
+              421.26
+            ],
+            "mean_rgb": [
+              5.16,
+              51.58,
+              35.38
+            ],
+            "score": 1470.43
+          },
+          "pixel_errors_to_ground_truth": {
+            "task_board/nic_card_mount_0/sfp_port_0_link": {
+              "du_px": -8.86,
+              "dv_px": 17.4,
+              "error_px": 19.52
+            },
+            "task_board/nic_card_mount_0/sfp_port_0_link_entrance": {
+              "du_px": -8.34,
+              "dv_px": -9.65,
+              "error_px": 12.76
+            }
+          }
+        },
+        "center": {
+          "selected_detection": {
+            "bbox": [
+              417,
+              511,
+              449,
+              514
+            ],
+            "area": 124,
+            "centroid": [
+              432.88,
+              512.47
+            ],
+            "mean_rgb": [
+              15.48,
+              56.29,
+              41.75
+            ],
+            "score": 698.66
+          },
+          "pixel_errors_to_ground_truth": {
+            "task_board/nic_card_mount_0/sfp_port_0_link": {
+              "du_px": -9.8,
+              "dv_px": 22.49,
+              "error_px": 24.53
+            },
+            "task_board/nic_card_mount_0/sfp_port_0_link_entrance": {
+              "du_px": 6.67,
+              "dv_px": -13.69,
+              "error_px": 15.23
+            }
+          }
+        },
+        "right": {
+          "selected_detection": {
+            "bbox": [
+              501,
+              533,
+              505,
+              545
+            ],
+            "area": 30,
+            "centroid": [
+              503.1,
+              539.07
+            ],
+            "mean_rgb": [
+              35.47,
+              54.3,
+              40.87
+            ],
+            "score": 169.57
+          },
+          "pixel_errors_to_ground_truth": {
+            "task_board/nic_card_mount_0/sfp_port_0_link": {
+              "du_px": 39.54,
+              "dv_px": -86.39,
+              "error_px": 95.01
+            },
+            "task_board/nic_card_mount_0/sfp_port_0_link_entrance": {
+              "du_px": 54.59,
+              "dv_px": -138.46,
+              "error_px": 148.84
+            }
+          }
+        }
+      },
+      "triangulation": {
+        "point_base_link": [
+          -0.408018,
+          0.203346,
+          0.092228
+        ],
+        "ray_count": 3,
+        "errors_to_ground_truth": {
+          "task_board/nic_card_mount_0/sfp_port_0_link": {
+            "error_m": 0.04297,
+            "error_mm": 42.97
+          },
+          "task_board/nic_card_mount_0/sfp_port_0_link_entrance": {
+            "error_m": 0.08794,
+            "error_mm": 87.94
+          }
+        },
+        "pairwise": {
+          "left_center": {
+            "point_base_link": [
+              -0.415745,
+              0.210775,
+              0.156213
+            ],
+            "errors_to_ground_truth": {
+              "task_board/nic_card_mount_0/sfp_port_0_link": {
+                "error_m": 0.02284,
+                "error_mm": 22.84
+              },
+              "task_board/nic_card_mount_0/sfp_port_0_link_entrance": {
+                "error_m": 0.02322,
+                "error_mm": 23.22
+              }
+            }
+          },
+          "left_right": {
+            "point_base_link": [
+              -0.401481,
+              0.204956,
+              0.067063
+            ],
+            "errors_to_ground_truth": {
+              "task_board/nic_card_mount_0/sfp_port_0_link": {
+                "error_m": 0.06831,
+                "error_mm": 68.31
+              },
+              "task_board/nic_card_mount_0/sfp_port_0_link_entrance": {
+                "error_m": 0.11338,
+                "error_mm": 113.38
+              }
+            }
+          },
+          "center_right": {
+            "point_base_link": [
+              -0.415068,
+              0.198352,
+              0.063083
+            ],
+            "errors_to_ground_truth": {
+              "task_board/nic_card_mount_0/sfp_port_0_link": {
+                "error_m": 0.07188,
+                "error_mm": 71.88
+              },
+              "task_board/nic_card_mount_0/sfp_port_0_link_entrance": {
+                "error_m": 0.11717,
+                "error_mm": 117.17
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}
