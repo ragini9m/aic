@@ -60,6 +60,7 @@ class VisionPortPoseEstimator(PortPoseEstimator):
         self._last_port_pose = None
         self._plug_tcp_delta = None
         self._port_type = task.port_type
+        self._gt_port_frame = f"task_board/{task.target_module_name}/{task.port_name}_link"
         if self._port_type not in self._inference:
             self._logger.error(f"No weights loaded for port_type={self._port_type!r}")
             return False
@@ -113,6 +114,29 @@ class VisionPortPoseEstimator(PortPoseEstimator):
 
         if self._last_port_pose is None:
             self._logger.warn("[vision] no valid port pose yet", throttle_duration_sec=2.0)
+
+        # --- DEBUG: compare vision estimate vs ground-truth TF ---
+        gt_T = self._lookup_transform_mat(self.BASE_FRAME, self._gt_port_frame)
+        if gt_T is not None and self._last_port_pose is not None:
+            vx = self._last_port_pose.position.x
+            vy = self._last_port_pose.position.y
+            vz = self._last_port_pose.position.z
+            gx, gy, gz = gt_T[0, 3], gt_T[1, 3], gt_T[2, 3]
+            self._logger.info(
+                f"[vision vs GT] "
+                f"vision=({vx:.4f},{vy:.4f},{vz:.4f})  "
+                f"gt=({gx:.4f},{gy:.4f},{gz:.4f})  "
+                f"err=({vx-gx:.4f},{vy-gy:.4f},{vz-gz:.4f})",
+                throttle_duration_sec=2.0,
+            )
+        elif gt_T is not None and self._last_port_pose is None:
+            gx, gy, gz = gt_T[0, 3], gt_T[1, 3], gt_T[2, 3]
+            self._logger.info(
+                f"[vision vs GT] vision=None  gt=({gx:.4f},{gy:.4f},{gz:.4f})",
+                throttle_duration_sec=2.0,
+            )
+        # ---------------------------------------------------------
+
         return self._last_port_pose
 
     def get_plug_tip_pose(self, observation: Optional[Observation]) -> Optional[Pose]:
