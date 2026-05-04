@@ -49,6 +49,7 @@ SEAT_Z_DEPTH = -0.015         # 15 mm below entrance = fully seated
 
 LIFT_BUDGET_S = 3.0
 XY_ALIGN_BUDGET_S = 4.0
+Z_ALIGN_BUDGET_S = 4.0
 APPROACH_BUDGET_S = 5.0
 ALIGN_BUDGET_S = 3.0
 SEARCH_BUDGET_S = 15.0
@@ -72,6 +73,7 @@ class State(Enum):
     INIT = "INIT"
     LIFT = "LIFT"
     XY_ALIGN = "XY_ALIGN"
+    Z_ALIGN = "Z_ALIGN"
     APPROACH = "APPROACH"
     ALIGN = "ALIGN"
     SEARCH = "SEARCH"
@@ -85,6 +87,9 @@ class InsertCablePolicy(Policy):
     def __init__(self, parent_node):
         super().__init__(parent_node)
         self._alignment_only = self._param(parent_node, "alignment_only", True)
+        self._alignment_descend_after_xy = self._param(parent_node, "alignment_descend_after_xy", False)
+        self._alignment_z_offset = float(self._param(parent_node, "alignment_z_offset", 0.08))
+        self._alignment_z_budget_s = float(self._param(parent_node, "alignment_z_budget_s", Z_ALIGN_BUDGET_S))
         self._estimator = self._build_estimator(parent_node)
         self.get_logger().info(
             f"InsertCablePolicy ready ({type(self._estimator).__name__})."
@@ -243,6 +248,10 @@ class InsertCablePolicy(Policy):
                 )
                 if lateral_error <= XY_ALIGN_TOLERANCE_M or elapsed_in_state > XY_ALIGN_BUDGET_S:
                     if self._alignment_only:
+                        if self._alignment_descend_after_xy:
+                            state, state_entered = State.Z_ALIGN, self.time_now()
+                            send_feedback("Z_ALIGN")
+                            continue
                         self.get_logger().info(
                             f"[xy_align] alignment-only complete err={lateral_error:.4f}m; holding pose"
                         )
@@ -251,6 +260,24 @@ class InsertCablePolicy(Policy):
                         continue
                     state, state_entered = State.APPROACH, self.time_now()
                     send_feedback("APPROACH")
+
+            elif state == State.Z_ALIGN:
+                self.get_logger().info(
+                    f"[z_align] target_port_xy=({port.position.x:.4f},{port.position.y:.4f}) "
+                    f"current_plug_z={plug.position.z:.4f} "
+                    f"target_plug_z={port.position.z + self._alignment_z_offset:.4f} "
+                    f"offset={self._alignment_z_offset:.4f}",
+                    throttle_duration_sec=0.5,
+                )
+                self._command(
+                    move_robot, APPROACH, port, plug, gripper,
+                    z_offset=self._alignment_z_offset,
+                )
+                if elapsed_in_state > self._alignment_z_budget_s:
+                    self.get_logger().info("[z_align] alignment-only z target complete; holding pose")
+                    success = True
+                    state = State.DONE
+                    continue
 
             elif state == State.APPROACH:
                 self._command(
