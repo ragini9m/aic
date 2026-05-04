@@ -63,6 +63,9 @@ class VisionPortPoseEstimator(PortPoseEstimator):
         self._use_configured_plug_offsets = bool(
             _param("vision_use_configured_plug_offsets", False)
         )
+        self._allow_tcp_plug_fallback = bool(
+            _param("vision_allow_tcp_plug_fallback", True)
+        )
         self._configured_plug_offsets_tcp = {
             "sfp": tuple(float(v) for v in _param("sfp_plug_tip_offset_tcp_xyz", [0.0, 0.0, 0.0])),
             "sc": tuple(float(v) for v in _param("sc_plug_tip_offset_tcp_xyz", [0.0, 0.0, 0.0])),
@@ -196,11 +199,17 @@ class VisionPortPoseEstimator(PortPoseEstimator):
         if tcp is None:
             return None
         if self._plug_tip_offset_tcp is None:
+            if not self._allow_tcp_plug_fallback:
+                self._logger.warn(
+                    "[vision] no plug-tip calibration available; cannot estimate plug pose without TF",
+                    throttle_duration_sec=2.0,
+                )
+                return None
             self._logger.warn(
-                "[vision] no plug-tip calibration available; cannot estimate plug pose without TF",
+                "[vision] no plug-tip calibration available; using TCP as plug-tip fallback",
                 throttle_duration_sec=2.0,
             )
-            return None
+            return tcp
         dx, dy, dz = self._plug_tip_offset_tcp
         tip_in_base = _pose_to_mat(tcp) @ np.array([dx, dy, dz, 1.0], dtype=np.float64)
         plug = Pose()

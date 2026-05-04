@@ -31,6 +31,7 @@ vision_debug_gt : log vision-vs-GT error when GT TF is available, default false
 vision_gt_error_gate : reject vision estimates whose GT error is too high, default false
 vision_max_gt_error_m : GT gate threshold, default 0.02
 vision_use_configured_plug_offsets : use configured TCP-frame plug offsets if TF is unavailable, default false
+vision_allow_tcp_plug_fallback : use TCP as plug tip when no offset/TF is available, default true
 sfp_plug_tip_offset_tcp_xyz : TCP-frame SFP plug-tip offset, default [0, 0, 0]
 sc_plug_tip_offset_tcp_xyz : TCP-frame SC plug-tip offset, default [0, 0, 0]
 ```
@@ -60,7 +61,7 @@ pixi run ros2 run aic_model aic_model --ros-args \
     -p sc_keypoint_weights:=/home/$USER/aic_data/models/sc_keypoints.pt
 ```
 
-> The plug pose can still be calibrated from `/tf` during development. With `ground_truth:=false`, either provide configured TCP-frame plug-tip offsets or the policy will abort instead of pretending the plug tip equals the TCP.
+> The plug pose can still be calibrated from `/tf` during development. With `ground_truth:=false`, the estimator uses configured TCP-frame plug-tip offsets if provided; otherwise it falls back to treating the TCP as the plug tip so the policy can still execute.
 
 ---
 
