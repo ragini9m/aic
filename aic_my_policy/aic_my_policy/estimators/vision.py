@@ -84,6 +84,7 @@ class VisionPortPoseEstimator(PortPoseEstimator):
         self._pending_port_samples: list[Pose] = []
         self._last_port_stamp_ns: Optional[int] = None
         self._plug_tip_offset_tcp: Optional[tuple[float, float, float]] = None
+        self._logged_plug_tip_offset = False
 
     # --- lifecycle --------------------------------------------------------
 
@@ -94,6 +95,7 @@ class VisionPortPoseEstimator(PortPoseEstimator):
         self._smoothed_port_xyz = None   # EMA-smoothed position
         self._last_port_stamp_ns = None
         self._plug_tip_offset_tcp = None
+        self._logged_plug_tip_offset = False
         self._port_type = task.port_type
         self._gt_port_frame = f"task_board/{task.target_module_name}/{task.port_name}_link"
         if self._port_type not in self._inference:
@@ -205,6 +207,14 @@ class VisionPortPoseEstimator(PortPoseEstimator):
                         dtype=np.float64,
                     )
                     self._plug_tip_offset_tcp = tuple(float(v) for v in plug_in_tcp[:3])
+                    if not self._logged_plug_tip_offset:
+                        self._logger.info(
+                            f"[vision] calibrated {self._port_type} plug-tip offset in TCP frame: "
+                            f"[{self._plug_tip_offset_tcp[0]:.5f}, "
+                            f"{self._plug_tip_offset_tcp[1]:.5f}, "
+                            f"{self._plug_tip_offset_tcp[2]:.5f}]"
+                        )
+                        self._logged_plug_tip_offset = True
                 return plug_pose
 
         # TF blocked (ground_truth:=false): derive from TCP + calibrated delta.

@@ -48,6 +48,7 @@ SEARCH_Z_START = 0.005        # begin search 5 mm above the port entrance
 SEAT_Z_DEPTH = -0.015         # 15 mm below entrance = fully seated
 
 LIFT_BUDGET_S = 3.0
+XY_ALIGN_BUDGET_S = 4.0
 APPROACH_BUDGET_S = 5.0
 ALIGN_BUDGET_S = 3.0
 SEARCH_BUDGET_S = 15.0
@@ -56,6 +57,7 @@ VERIFY_HOLD_S = 2.0
 MISSING_POSE_ABORT_S = 5.0
 
 SAFE_Z = 0.35           # lift to this height before moving laterally (m in base_link)
+XY_ALIGN_TOLERANCE_M = 0.015
 
 # Port position sanity bounds (base_link frame). Reject vision estimates outside these.
 PORT_X_BOUNDS = (-1.00, 1.00)
@@ -69,6 +71,7 @@ SEAT_DESCENT_M_PER_S = 0.010     # faster once seated (10 mm/s)
 class State(Enum):
     INIT = "INIT"
     LIFT = "LIFT"
+    XY_ALIGN = "XY_ALIGN"
     APPROACH = "APPROACH"
     ALIGN = "ALIGN"
     SEARCH = "SEARCH"
@@ -212,6 +215,23 @@ class InsertCablePolicy(Policy):
                     pass
                 at_safe_z = gripper.position.z >= (SAFE_Z - 0.03)
                 if at_safe_z or elapsed_in_state > LIFT_BUDGET_S:
+                    state, state_entered = State.XY_ALIGN, self.time_now()
+                    send_feedback("XY_ALIGN")
+
+            elif state == State.XY_ALIGN:
+                # First align laterally at the current safe height. This avoids
+                # coupling noisy z estimates with lateral motion near the board.
+                keep_current_plug_z = plug.position.z - port.position.z
+                self._command(
+                    move_robot, APPROACH, port, plug, gripper,
+                    z_offset=keep_current_plug_z,
+                    slerp_fraction=min(1.0, elapsed_in_state / max(0.1, XY_ALIGN_BUDGET_S)),
+                )
+                lateral_error = (
+                    (plug.position.x - port.position.x) ** 2
+                    + (plug.position.y - port.position.y) ** 2
+                ) ** 0.5
+                if lateral_error <= XY_ALIGN_TOLERANCE_M or elapsed_in_state > XY_ALIGN_BUDGET_S:
                     state, state_entered = State.APPROACH, self.time_now()
                     send_feedback("APPROACH")
 
