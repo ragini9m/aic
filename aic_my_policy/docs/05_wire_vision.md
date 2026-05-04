@@ -33,7 +33,7 @@ vision_max_gt_error_m : GT gate threshold, default 0.02
 vision_use_configured_plug_offsets : use configured TCP-frame plug offsets if TF is unavailable, default false
 vision_allow_tcp_plug_fallback : use TCP as plug tip when no offset/TF is available, default true
 vision_latch_port_pose : freeze the initial accepted port pose for the whole trial, default true
-vision_latch_min_samples : accepted samples before latching, default 3
+vision_latch_min_samples : accepted samples before latching, default 5
 vision_use_fixed_port_z : replace estimated port z with per-port-type base-frame constants, default true
 sfp_fixed_port_z_base : base-frame SFP port entrance z, default 0.1335
 sc_fixed_port_z_base : base-frame SC port entrance z, default 0.0145

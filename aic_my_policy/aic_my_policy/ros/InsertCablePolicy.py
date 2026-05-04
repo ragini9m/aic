@@ -84,10 +84,17 @@ class State(Enum):
 class InsertCablePolicy(Policy):
     def __init__(self, parent_node):
         super().__init__(parent_node)
+        self._alignment_only = self._param(parent_node, "alignment_only", True)
         self._estimator = self._build_estimator(parent_node)
         self.get_logger().info(
             f"InsertCablePolicy ready ({type(self._estimator).__name__})."
         )
+
+    @staticmethod
+    def _param(parent_node, name: str, default):
+        if not parent_node.has_parameter(name):
+            parent_node.declare_parameter(name, default)
+        return parent_node.get_parameter(name).value
 
     def _build_estimator(self, parent_node) -> PortPoseEstimator:
         """Choose estimator via ROS params; default to GT for bring-up.
@@ -97,18 +104,13 @@ class InsertCablePolicy(Policy):
           sfp_keypoint_weights   : path to trained SFP keypoint checkpoint
           sc_keypoint_weights    : path to trained SC  keypoint checkpoint
         """
-        def _param(name: str, default):
-            if not parent_node.has_parameter(name):
-                parent_node.declare_parameter(name, default)
-            return parent_node.get_parameter(name).value
-
-        kind = _param("estimator", "ground_truth")
+        kind = self._param(parent_node, "estimator", "ground_truth")
         if kind == "ground_truth":
             return GroundTruthPortPoseEstimator(parent_node)
         if kind == "vision":
             from aic_my_policy.estimators.vision import VisionPortPoseEstimator
-            sfp = _param("sfp_keypoint_weights", "")
-            sc = _param("sc_keypoint_weights", "")
+            sfp = self._param(parent_node, "sfp_keypoint_weights", "")
+            sc = self._param(parent_node, "sc_keypoint_weights", "")
             if not sfp or not sc:
                 raise RuntimeError(
                     "estimator=vision requires sfp_keypoint_weights and sc_keypoint_weights"
@@ -240,6 +242,13 @@ class InsertCablePolicy(Policy):
                     slerp_fraction=min(1.0, elapsed_in_state / max(0.1, XY_ALIGN_BUDGET_S)),
                 )
                 if lateral_error <= XY_ALIGN_TOLERANCE_M or elapsed_in_state > XY_ALIGN_BUDGET_S:
+                    if self._alignment_only:
+                        self.get_logger().info(
+                            f"[xy_align] alignment-only complete err={lateral_error:.4f}m; holding pose"
+                        )
+                        success = True
+                        state = State.DONE
+                        continue
                     state, state_entered = State.APPROACH, self.time_now()
                     send_feedback("APPROACH")
 

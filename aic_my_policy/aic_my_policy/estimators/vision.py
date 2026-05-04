@@ -67,7 +67,7 @@ class VisionPortPoseEstimator(PortPoseEstimator):
             _param("vision_allow_tcp_plug_fallback", True)
         )
         self._latch_port_pose = bool(_param("vision_latch_port_pose", True))
-        self._latch_min_samples = int(_param("vision_latch_min_samples", 3))
+        self._latch_min_samples = int(_param("vision_latch_min_samples", 5))
         self._use_fixed_port_z = bool(_param("vision_use_fixed_port_z", True))
         self._fixed_port_z_base = {
             "sfp": float(_param("sfp_fixed_port_z_base", 0.1335)),
