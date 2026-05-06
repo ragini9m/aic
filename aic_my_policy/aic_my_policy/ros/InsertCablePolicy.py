@@ -74,6 +74,7 @@ class State(Enum):
     LIFT = "LIFT"
     XY_ALIGN = "XY_ALIGN"
     Z_ALIGN = "Z_ALIGN"
+    INSERT_NIKHIL_ACT = "INSERT_NIKHIL_ACT"
     APPROACH = "APPROACH"
     ALIGN = "ALIGN"
     SEARCH = "SEARCH"
@@ -90,9 +91,12 @@ class InsertCablePolicy(Policy):
         self._alignment_descend_after_xy = self._param(parent_node, "alignment_descend_after_xy", False)
         self._alignment_z_offset = float(self._param(parent_node, "alignment_z_offset", 0.08))
         self._alignment_z_budget_s = float(self._param(parent_node, "alignment_z_budget_s", Z_ALIGN_BUDGET_S))
+        self._insertion_policy = str(self._param(parent_node, "insertion_policy", "none"))
+        self._nikhil_act = None
         self._estimator = self._build_estimator(parent_node)
         self.get_logger().info(
-            f"InsertCablePolicy ready ({type(self._estimator).__name__})."
+            f"InsertCablePolicy ready ({type(self._estimator).__name__}, "
+            f"insertion_policy={self._insertion_policy})."
         )
 
     @staticmethod
@@ -247,6 +251,10 @@ class InsertCablePolicy(Policy):
                     slerp_fraction=min(1.0, elapsed_in_state / max(0.1, XY_ALIGN_BUDGET_S)),
                 )
                 if lateral_error <= XY_ALIGN_TOLERANCE_M or elapsed_in_state > XY_ALIGN_BUDGET_S:
+                    if self._insertion_policy == "nikhil_act":
+                        state, state_entered = State.INSERT_NIKHIL_ACT, self.time_now()
+                        send_feedback("INSERT_NIKHIL_ACT")
+                        continue
                     if self._alignment_only:
                         if self._alignment_descend_after_xy:
                             state, state_entered = State.Z_ALIGN, self.time_now()
@@ -260,6 +268,18 @@ class InsertCablePolicy(Policy):
                         continue
                     state, state_entered = State.APPROACH, self.time_now()
                     send_feedback("APPROACH")
+
+            elif state == State.INSERT_NIKHIL_ACT:
+                success = self._run_nikhil_act(
+                    task=task,
+                    get_observation=get_observation,
+                    move_robot=move_robot,
+                    send_feedback=send_feedback,
+                    port=port,
+                    plug=plug,
+                )
+                state = State.DONE if success else State.ABORT
+                continue
 
             elif state == State.Z_ALIGN:
                 self.get_logger().info(
@@ -336,6 +356,32 @@ class InsertCablePolicy(Policy):
         return success
 
     # ---- helpers ---------------------------------------------------------
+
+    def _run_nikhil_act(
+        self,
+        task: Task,
+        get_observation: GetObservationCallback,
+        move_robot: MoveRobotCallback,
+        send_feedback: SendFeedbackCallback,
+        port: Pose,
+        plug: Pose,
+    ) -> bool:
+        if self._nikhil_act is None:
+            from aic_my_policy.insertion.nikhil_act import NikhilACTInsertion
+            self._nikhil_act = NikhilACTInsertion(self._parent_node)
+        try:
+            return self._nikhil_act.run(
+                task=task,
+                get_observation=get_observation,
+                move_robot=move_robot,
+                send_feedback=send_feedback,
+                estimator=self._estimator,
+                port_pose=port,
+                plug_pose=plug,
+            )
+        except Exception as ex:
+            self.get_logger().error(f"[nikhil_act] insertion failed: {ex}")
+            return False
 
     def _gripper_pose(self, observation: Optional[Observation]) -> Optional[Pose]:
         if observation is None:

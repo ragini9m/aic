@@ -1,6 +1,13 @@
+from pathlib import Path
+
 from setuptools import find_packages, setup
 
 package_name = "aic_my_policy"
+policy_files = [
+    str(path)
+    for path in Path("policy").rglob("*")
+    if path.is_file()
+]
 
 setup(
     name=package_name,
@@ -9,6 +16,13 @@ setup(
     data_files=[
         ("share/ament_index/resource_index/packages", ["resource/" + package_name]),
         ("share/" + package_name, ["package.xml"]),
+        *[
+            (
+                "share/" + package_name + "/" + str(Path(path).parent),
+                [path],
+            )
+            for path in policy_files
+        ],
     ],
     install_requires=["setuptools"],
     zip_safe=True,
