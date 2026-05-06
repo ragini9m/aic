@@ -23,6 +23,21 @@ POLICY_MODULE_PREFIX="${POLICY_MODULE_PREFIX:-aic_my_policy.aic_my_policy}"
 
 mkdir -p "$OUT_DIR"
 
+if ! "$ROS2_BIN" pkg prefix aic_bringup >/dev/null 2>&1; then
+    cat >&2 <<EOF
+ERROR: ROS package 'aic_bringup' is not visible to ros2.
+
+Run this collector inside a sourced evaluation workspace/container, for example:
+  source /ws_aic/install/setup.bash
+  bash $0 <output_dir> <num_samples> [start_idx] [random|sfp|sc]
+
+If you built from source locally:
+  source install/setup.bash
+
+EOF
+    exit 2
+fi
+
 for (( i = START_IDX; i < START_IDX + N; i++ )); do
     SAMPLE_PATH="$OUT_DIR/sample_$(printf '%06d' "$i").npz"
     if [[ -f "$SAMPLE_PATH" ]]; then
