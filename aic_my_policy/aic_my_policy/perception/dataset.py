@@ -1,8 +1,9 @@
 """Dataset loader + target generator for keypoint training.
 
-Reads `.npz` samples written by `capture_scene.py`, projects the 3D
-port keypoints into image space using the camera intrinsics and the
-ground-truth port pose, and produces Gaussian heatmap targets.
+Reads `.npz` samples written by `capture_scene.py` and produces Gaussian
+heatmap targets. Newer captures store projected per-camera labels
+directly; older captures are still supported by projecting the 3D port
+pose through the saved camera calibration.
 
 For simplicity we use only the center camera. Extending to all three
 cameras is a later optimization.
@@ -125,9 +126,16 @@ class PortKeypointDataset(Dataset):
             K = z[f"K_{self.camera}"]
             cam_to_base = z[f"cam_{self.camera}_to_base"]
             port_pose = z["port_poses"][port_idx]
+            saved_key = f"port_keypoints_{self.camera}"
+            saved_visible = f"port_visible_{self.camera}"
+            if saved_key in z and saved_visible in z and bool(z[saved_visible][port_idx]):
+                uv_full = z[saved_key][port_idx].astype(np.float64)
+            else:
+                uv_full = None
 
         # Project keypoints at original resolution first.
-        uv_full = project_port_keypoints(port_pose, cam_to_base, K, self.port_type)
+        if uv_full is None:
+            uv_full = project_port_keypoints(port_pose, cam_to_base, K, self.port_type)
         if uv_full is None:
             # Degenerate sample (port behind camera). Return a zero mask so
             # the trainer can skip.
